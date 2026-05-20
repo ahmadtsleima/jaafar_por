@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Jaafar Sleiman is a professional photographer creating cinematic brand campaigns, fashion editorials, and event coverage."
+    />
+    <title>Jaafar Sleiman | Photographer</title>
+    <meta property="og:title" content="Jaafar Sleiman | Photographer" />
+    <meta property="og:description" content="Jaafar Sleiman is a professional photographer creating cinematic brand campaigns, fashion editorials, and event coverage." />
+    <meta property="og:url" content="https://jaafarsleiman.com" />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Jaafar Sleiman | Photographer" />
+    <meta name="twitter:description" content="Jaafar Sleiman is a professional photographer creating cinematic brand campaigns, fashion editorials, and event coverage." />
+    <link rel="canonical" href="https://jaafarsleiman.com" />
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='4' fill='%230a0a0a'/><circle cx='16' cy='16' r='8' fill='none' stroke='%23c9a84c' stroke-width='1.5'/><line x1='16' y1='6' x2='16' y2='26' stroke='%23c9a84c' stroke-width='1'/><line x1='6' y1='16' x2='26' y2='16' stroke='%23c9a84c' stroke-width='1'/></svg>" type="image/svg+xml" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      #bottom-vignette {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: var(--vignette-height, 180px);
+        pointer-events: none;
+        z-index: 150;
+        background:
+          linear-gradient(
+            to top,
+            rgba(10, 10, 10, var(--vignette-shade, 0.52)) 0%,
+            rgba(10, 10, 10, calc(var(--vignette-shade, 0.52) * 0.62)) 42%,
+            transparent 100%
+          ),
+          radial-gradient(
+            ellipse at 50% 100%,
+            rgba(201, 169, 110, var(--vignette-warmth, 0.035)) 0%,
+            transparent 66%
+          );
+        backdrop-filter: blur(var(--vignette-blur, 0px));
+        -webkit-backdrop-filter: blur(var(--vignette-blur, 0px));
+        -webkit-mask-image: linear-gradient(to top, #000 0%, rgba(0, 0, 0, 0.92) 36%, rgba(0, 0, 0, 0.32) 72%, transparent 100%);
+        mask-image: linear-gradient(to top, #000 0%, rgba(0, 0, 0, 0.92) 36%, rgba(0, 0, 0, 0.32) 72%, transparent 100%);
+        opacity: var(--vignette-opacity, 0);
+        transform: translateY(var(--vignette-y, 28px));
+        transition:
+          opacity 0.28s ease,
+          backdrop-filter 0.28s ease,
+          -webkit-backdrop-filter 0.28s ease,
+          height 0.28s ease,
+          transform 0.28s ease;
+      }
+
+      #bottom-vignette::after {
+        content: "";
+        position: absolute;
+        inset: auto 0 0;
+        height: 55%;
+        background: linear-gradient(to top, rgba(10, 10, 10, 0.74), transparent);
+        filter: blur(18px);
+        opacity: var(--vignette-softness, 0);
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Film grain overlay -->
+    <svg xmlns="http://www.w3.org/2000/svg" style="position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:9999;opacity:0.07;mix-blend-mode:normal;" aria-hidden="true">
+      <filter id="grain">
+        <feTurbulence type="fractalNoise" baseFrequency="0.82" numOctaves="4" stitchTiles="stitch"/>
+        <feColorMatrix type="saturate" values="0"/>
+      </filter>
+      <rect width="100%" height="100%" filter="url(#grain)"/>
+    </svg>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+    <!-- Bottom blur vignette -->
+    <div id="bottom-vignette" aria-hidden="true"></div>
+  </body>
+</html>
