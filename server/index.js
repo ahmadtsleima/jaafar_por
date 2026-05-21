@@ -12,7 +12,7 @@ const PORT = process.env.PORT || 3001;
 
 app.use(
   cors({
-    origin: process.env.FRONTEND_URL || "http://localhost:5173",
+    origin: process.env.FRONTEND_URL || true,
     credentials: true,
   })
 );
@@ -24,6 +24,14 @@ app.get("/api/health", (_req, res) => res.json({ status: "ok", ts: Date.now() })
 app.use("/api", authRouter);
 app.use("/api", photosRouter);
 app.use("/api", videosRouter);
+
+// Serve the Vite production build
+const distDir = path.join(__dirname, "..", "dist");
+app.use(express.static(distDir));
+// SPA fallback — always return index.html for non-API routes
+app.get("*", (_req, res) => {
+  res.sendFile(path.join(distDir, "index.html"));
+});
 
 app.use((err, _req, res, _next) => {
   console.error(err);
