@@ -1,12 +1,15 @@
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
+import { fileURLToPath } from "url";
+import path from "path";
 import authRouter from "./routes/auth.js";
 import photosRouter from "./routes/photos.js";
 import videosRouter from "./routes/videos.js";
 
 dotenv.config();
 
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
 const PORT = process.env.PORT || 3001;
 
