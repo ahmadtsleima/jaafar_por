@@ -45,6 +45,10 @@ db.exec(`
   );
 `);
 
+// Add r2_key column if it doesn't exist yet (idempotent migration)
+try { db.exec("ALTER TABLE photos ADD COLUMN r2_key TEXT"); } catch (_) {}
+try { db.exec("ALTER TABLE videos ADD COLUMN r2_key TEXT"); } catch (_) {}
+
 const photosSchema = db
   .prepare("SELECT sql FROM sqlite_master WHERE type = 'table' AND name = 'photos'")
   .get()?.sql || "";

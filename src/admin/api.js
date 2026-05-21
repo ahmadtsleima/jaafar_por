@@ -23,6 +23,8 @@ export function isAuthenticated() {
   }
 }
 
+const API_BASE = import.meta.env.VITE_API_URL ?? "";
+
 async function apiFetch(path, options = {}) {
   const token = getToken();
   const headers = { "Content-Type": "application/json", ...options.headers };
@@ -31,7 +33,7 @@ async function apiFetch(path, options = {}) {
   // Remove Content-Type for FormData (browser sets boundary automatically)
   if (options.body instanceof FormData) delete headers["Content-Type"];
 
-  const res = await fetch(`/api${path}`, { ...options, headers });
+  const res = await fetch(`${API_BASE}/api${path}`, { ...options, headers });
   if (res.status === 401) {
     clearToken();
     window.location.reload();

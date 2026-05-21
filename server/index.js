@@ -1,15 +1,12 @@
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
-import { fileURLToPath } from "url";
-import path from "path";
 import authRouter from "./routes/auth.js";
 import photosRouter from "./routes/photos.js";
 import videosRouter from "./routes/videos.js";
 
 dotenv.config();
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
 const PORT = process.env.PORT || 3001;
 
@@ -21,9 +18,6 @@ app.use(
 );
 
 app.use(express.json());
-
-// Serve uploaded files as static assets
-app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 app.get("/api/health", (_req, res) => res.json({ status: "ok", ts: Date.now() }));
 

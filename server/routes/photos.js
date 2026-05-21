@@ -1,36 +1,50 @@
 ﻿import { Router } from "express";
 import multer from "multer";
-import fs from "fs";
-import path from "path";
 import crypto from "crypto";
-import { fileURLToPath } from "url";
+import path from "path";
+import { PutObjectCommand, DeleteObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import sizeOf from "image-size";
 import { requireAuth } from "../middleware/auth.js";
 import db from "../config/db.js";
-
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const UPLOADS_DIR = path.join(__dirname, "..", "uploads");
+import { r2, R2_BUCKET, SIGNED_URL_EXPIRES } from "../config/r2.js";
 
 const router = Router();
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 20 * 1024 * 1024 } });
 
-// â”€â”€â”€ Public â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// --- Presigned URL helpers ---------------------------------------------------
+
+async function presign(key) {
+  return getSignedUrl(r2, new GetObjectCommand({ Bucket: R2_BUCKET, Key: key }), { expiresIn: SIGNED_URL_EXPIRES });
+}
+
+async function enrichUrl(row) {
+  if (!row) return row;
+  if (row.r2_key) row.url = await presign(row.r2_key);
+  return row;
+}
+
+async function enrichAll(rows) {
+  return Promise.all(rows.map(enrichUrl));
+}
+
+// --- Public ------------------------------------------------------------------
 
 // GET /api/photos?category=brands&slot=gallery_featured
-router.get("/photos", (req, res) => {
+router.get("/photos", async (req, res) => {
   const { category, slot } = req.query;
-  let sql = "SELECT id, slot, category, title, alt_text, url, width, height, sort_order FROM photos WHERE published = 1";
+  let sql = "SELECT id, slot, category, title, alt_text, url, r2_key, width, height, sort_order FROM photos WHERE published = 1";
   const params = [];
   if (category) { sql += " AND category = ?"; params.push(category); }
   if (slot)     { sql += " AND slot = ?";     params.push(slot); }
   sql += " ORDER BY sort_order ASC, uploaded_at DESC";
-  return res.json(db.prepare(sql).all(...params));
+  return res.json(await enrichAll(db.prepare(sql).all(...params)));
 });
 
-// â”€â”€â”€ Admin â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// --- Admin -------------------------------------------------------------------
 
 // GET /api/admin/photos?category=all|brands|filmmaking|commercial|fashion|unpublished
-router.get("/admin/photos", requireAuth, (req, res) => {
+router.get("/admin/photos", requireAuth, async (req, res) => {
   const { category } = req.query;
   let sql = "SELECT * FROM photos";
   const params = [];
@@ -43,7 +57,7 @@ router.get("/admin/photos", requireAuth, (req, res) => {
     }
   }
   sql += " ORDER BY sort_order ASC, uploaded_at DESC";
-  return res.json(db.prepare(sql).all(...params));
+  return res.json(await enrichAll(db.prepare(sql).all(...params)));
 });
 
 // GET /api/admin/stats
@@ -55,29 +69,34 @@ router.get("/admin/stats", requireAuth, (req, res) => {
   const catMap     = Object.fromEntries(cats.map((r) => [r.category, r.n]));
   return res.json({
     total, published,
-    brands: catMap.brands ?? 0,
+    brands:     catMap.brands     ?? 0,
     filmmaking: catMap.filmmaking ?? 0,
     commercial: catMap.commercial ?? 0,
-    fashion: catMap.fashion ?? 0,
-    events: catMap.events ?? 0,
+    fashion:    catMap.fashion    ?? 0,
+    events:     catMap.events     ?? 0,
     lastUpload,
   });
 });
 
 // POST /api/admin/photos  (multipart: file + fields)
-router.post("/admin/photos", requireAuth, upload.single("file"), (req, res) => {
+router.post("/admin/photos", requireAuth, upload.single("file"), async (req, res) => {
   if (!req.file) return res.status(400).json({ error: "No file provided" });
 
   const { slot, category, title, alt_text, sort_order, published } = req.body;
   if (!alt_text) return res.status(400).json({ error: "alt_text is required" });
   if (!slot)     return res.status(400).json({ error: "slot is required" });
 
-  const id  = crypto.randomUUID();
-  const ext = path.extname(req.file.originalname).toLowerCase() || ".jpg";
-  const filename = `${id}${ext}`;
-  const filePath = path.join(UPLOADS_DIR, filename);
+  const id    = crypto.randomUUID();
+  const ext   = path.extname(req.file.originalname).toLowerCase() || ".jpg";
+  const r2Key = `photos/${id}${ext}`;
 
-  fs.writeFileSync(filePath, req.file.buffer);
+  // Upload buffer directly to Cloudflare R2
+  await r2.send(new PutObjectCommand({
+    Bucket:      R2_BUCKET,
+    Key:         r2Key,
+    Body:        req.file.buffer,
+    ContentType: req.file.mimetype,
+  }));
 
   let width = 0, height = 0;
   try {
@@ -87,19 +106,19 @@ router.post("/admin/photos", requireAuth, upload.single("file"), (req, res) => {
   } catch (_) { /* non-fatal */ }
 
   db.prepare(
-    `INSERT INTO photos (id, slot, category, title, alt_text, url, file_path, width, height, sort_order, published)
+    `INSERT INTO photos (id, slot, category, title, alt_text, url, r2_key, width, height, sort_order, published)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
   ).run(
     id, slot, category || null, title || null, alt_text,
-    `/uploads/${filename}`, filePath, width, height,
+    r2Key, r2Key, width, height,
     parseInt(sort_order) || 0, published !== "false" ? 1 : 0
   );
 
   const row = db.prepare("SELECT * FROM photos WHERE id = ?").get(id);
-  return res.status(201).json(row);
+  return res.status(201).json(await enrichUrl(row));
 });
 
-// PATCH /api/admin/photos/reorder  â€” must be before /:id
+// PATCH /api/admin/photos/reorder  -- must be before /:id
 router.patch("/admin/photos/reorder", requireAuth, (req, res) => {
   const { items } = req.body;
   if (!Array.isArray(items) || items.length === 0)
@@ -111,7 +130,7 @@ router.patch("/admin/photos/reorder", requireAuth, (req, res) => {
 });
 
 // PATCH /api/admin/photos/:id
-router.patch("/admin/photos/:id", requireAuth, (req, res) => {
+router.patch("/admin/photos/:id", requireAuth, async (req, res) => {
   const { id } = req.params;
   const allowed = ["slot", "category", "title", "alt_text", "sort_order", "published"];
   const sets = [], params = [];
@@ -129,17 +148,26 @@ router.patch("/admin/photos/:id", requireAuth, (req, res) => {
   params.push(id);
   const info = db.prepare(`UPDATE photos SET ${sets.join(", ")} WHERE id = ?`).run(...params);
   if (info.changes === 0) return res.status(404).json({ error: "Photo not found" });
-  return res.json(db.prepare("SELECT * FROM photos WHERE id = ?").get(id));
+  const row = db.prepare("SELECT * FROM photos WHERE id = ?").get(id);
+  return res.json(await enrichUrl(row));
 });
 
-// DELETE /api/admin/photos/:id  (hard delete)
-router.delete("/admin/photos/:id", requireAuth, (req, res) => {
+// DELETE /api/admin/photos/:id
+router.delete("/admin/photos/:id", requireAuth, async (req, res) => {
   const { id } = req.params;
-  const row = db.prepare("SELECT file_path FROM photos WHERE id = ?").get(id);
+  const row = db.prepare("SELECT r2_key FROM photos WHERE id = ?").get(id);
   if (!row) return res.status(404).json({ error: "Photo not found" });
 
   db.prepare("DELETE FROM photos WHERE id = ?").run(id);
-  if (row.file_path) fs.unlink(row.file_path, () => {});
+
+  if (row.r2_key) {
+    try {
+      await r2.send(new DeleteObjectCommand({ Bucket: R2_BUCKET, Key: row.r2_key }));
+    } catch (err) {
+      console.error("[R2] delete photo error:", err?.message);
+    }
+  }
+
   return res.json({ success: true, id });
 });
 

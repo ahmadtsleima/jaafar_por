@@ -1,72 +1,92 @@
 ﻿import { Router } from "express";
 import multer from "multer";
-import fs from "fs";
-import path from "path";
 import crypto from "crypto";
-import { fileURLToPath } from "url";
+import path from "path";
+import { PutObjectCommand, DeleteObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { requireAuth } from "../middleware/auth.js";
 import db from "../config/db.js";
-
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const UPLOADS_DIR = path.join(__dirname, "..", "uploads");
+import { r2, R2_BUCKET, SIGNED_URL_EXPIRES } from "../config/r2.js";
 
 const router = Router();
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 500 * 1024 * 1024 } });
 const videoUpload = upload.fields([
-  { name: "file", maxCount: 1 },
+  { name: "file",  maxCount: 1  },
   { name: "files", maxCount: 30 },
 ]);
 
-// â”€â”€â”€ Public â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// --- Presigned URL helpers ---------------------------------------------------
+
+async function presign(key) {
+  return getSignedUrl(r2, new GetObjectCommand({ Bucket: R2_BUCKET, Key: key }), { expiresIn: SIGNED_URL_EXPIRES });
+}
+
+async function enrichUrl(row) {
+  if (!row) return row;
+  if (row.r2_key) row.url = await presign(row.r2_key);
+  return row;
+}
+
+async function enrichAll(rows) {
+  return Promise.all(rows.map(enrichUrl));
+}
+
+// --- Public ------------------------------------------------------------------
 
 // GET /api/videos?slot=scroll_scrub
-router.get("/videos", (req, res) => {
+router.get("/videos", async (req, res) => {
   const slot = req.query.slot || "scroll_scrub";
   const visibilityClause = String(slot).startsWith("motion_") ? "" : " AND published = 1";
   res.set("Cache-Control", "no-store");
 
   if (req.query.all === "1") {
     const rows = db.prepare(
-      `SELECT id, slot, url, duration_seconds, fps, resolution_width, resolution_height, uploaded_at FROM videos WHERE slot = ?${visibilityClause} ORDER BY uploaded_at DESC`
+      `SELECT id, slot, url, r2_key, duration_seconds, fps, resolution_width, resolution_height, uploaded_at FROM videos WHERE slot = ?${visibilityClause} ORDER BY uploaded_at DESC`
     ).all(slot);
-    return res.json(rows);
+    return res.json(await enrichAll(rows));
   }
 
   const row = db.prepare(
-    `SELECT id, slot, url, duration_seconds, fps, resolution_width, resolution_height, uploaded_at FROM videos WHERE slot = ?${visibilityClause} ORDER BY uploaded_at DESC LIMIT 1`
+    `SELECT id, slot, url, r2_key, duration_seconds, fps, resolution_width, resolution_height, uploaded_at FROM videos WHERE slot = ?${visibilityClause} ORDER BY uploaded_at DESC LIMIT 1`
   ).get(slot);
-  return res.json(row ?? null);
+  return res.json(row ? await enrichUrl(row) : null);
 });
 
-// â”€â”€â”€ Admin â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// --- Admin -------------------------------------------------------------------
 
 // GET /api/admin/videos?slot=scroll_scrub
-router.get("/admin/videos", requireAuth, (req, res) => {
+router.get("/admin/videos", requireAuth, async (req, res) => {
   const slot = req.query.slot || "scroll_scrub";
-  return res.json(db.prepare("SELECT * FROM videos WHERE slot = ? ORDER BY uploaded_at DESC").all(slot));
+  const rows = db.prepare("SELECT * FROM videos WHERE slot = ? ORDER BY uploaded_at DESC").all(slot);
+  return res.json(await enrichAll(rows));
 });
 
 // POST /api/admin/videos  (multipart: file/files + slot)
-router.post("/admin/videos", requireAuth, videoUpload, (req, res) => {
+router.post("/admin/videos", requireAuth, videoUpload, async (req, res) => {
   const slot = req.body.slot || "scroll_scrub";
   const files = [...(req.files?.files || []), ...(req.files?.file || [])];
   if (files.length === 0) return res.status(400).json({ error: "No file provided" });
   const isMotionSlot = String(slot).startsWith("motion_");
 
-  const videos = files.map((file) => {
-    const id  = crypto.randomUUID();
-    const ext = path.extname(file.originalname).toLowerCase() || ".mp4";
-    const filename = `${id}${ext}`;
-    const filePath = path.join(UPLOADS_DIR, filename);
+  const videos = await Promise.all(files.map(async (file) => {
+    const id    = crypto.randomUUID();
+    const ext   = path.extname(file.originalname).toLowerCase() || ".mp4";
+    const r2Key = `videos/${id}${ext}`;
 
-    fs.writeFileSync(filePath, file.buffer);
+    // Upload buffer directly to Cloudflare R2
+    await r2.send(new PutObjectCommand({
+      Bucket:      R2_BUCKET,
+      Key:         r2Key,
+      Body:        file.buffer,
+      ContentType: file.mimetype,
+    }));
 
     db.prepare(
-      "INSERT INTO videos (id, slot, url, file_path, published, is_staged) VALUES (?, ?, ?, ?, ?, ?)"
-    ).run(id, slot, `/uploads/${filename}`, filePath, isMotionSlot ? 1 : 0, isMotionSlot ? 0 : 1);
+      "INSERT INTO videos (id, slot, url, r2_key, published, is_staged) VALUES (?, ?, ?, ?, ?, ?)"
+    ).run(id, slot, r2Key, r2Key, isMotionSlot ? 1 : 0, isMotionSlot ? 0 : 1);
 
     return db.prepare("SELECT * FROM videos WHERE id = ?").get(id);
-  });
+  }));
 
   const firstExt = path.extname(files[0].originalname).toLowerCase().slice(1);
   const validations = {
@@ -75,11 +95,12 @@ router.post("/admin/videos", requireAuth, videoUpload, (req, res) => {
     resolution: { pass: true, label: "Resolution (requires ffprobe to verify)" },
   };
 
-  return res.status(201).json({ video: videos[0], videos, validations });
+  const enrichedVideos = await enrichAll(videos);
+  return res.status(201).json({ video: enrichedVideos[0], videos: enrichedVideos, validations });
 });
 
-// PATCH /api/admin/videos/:id/publish  â€” swap staged â†’ live
-router.patch("/admin/videos/:id/publish", requireAuth, (req, res) => {
+// PATCH /api/admin/videos/:id/publish  -- swap staged -> live
+router.patch("/admin/videos/:id/publish", requireAuth, async (req, res) => {
   const { id } = req.params;
   const row = db.prepare("SELECT slot FROM videos WHERE id = ?").get(id);
   if (!row) return res.status(404).json({ error: "Video not found" });
@@ -91,17 +112,26 @@ router.patch("/admin/videos/:id/publish", requireAuth, (req, res) => {
     db.prepare("UPDATE videos SET published = 1, is_staged = 0 WHERE id = ?").run(id);
   })();
 
-  return res.json(db.prepare("SELECT * FROM videos WHERE id = ?").get(id));
+  const updated = db.prepare("SELECT * FROM videos WHERE id = ?").get(id);
+  return res.json(await enrichUrl(updated));
 });
 
 // DELETE /api/admin/videos/:id
-router.delete("/admin/videos/:id", requireAuth, (req, res) => {
+router.delete("/admin/videos/:id", requireAuth, async (req, res) => {
   const { id } = req.params;
-  const row = db.prepare("SELECT file_path FROM videos WHERE id = ?").get(id);
+  const row = db.prepare("SELECT r2_key FROM videos WHERE id = ?").get(id);
   if (!row) return res.status(404).json({ error: "Video not found" });
 
   db.prepare("DELETE FROM videos WHERE id = ?").run(id);
-  if (row.file_path) fs.unlink(row.file_path, () => {});
+
+  if (row.r2_key) {
+    try {
+      await r2.send(new DeleteObjectCommand({ Bucket: R2_BUCKET, Key: row.r2_key }));
+    } catch (err) {
+      console.error("[R2] delete video error:", err?.message);
+    }
+  }
+
   return res.json({ success: true });
 });
 
