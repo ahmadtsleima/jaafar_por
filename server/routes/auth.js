@@ -11,14 +11,22 @@ router.post("/admin/login", async (req, res) => {
     return res.status(400).json({ error: "Password required" });
   }
 
+  // Support plain ADMIN_PASSWORD (easy to set in Railway) or bcrypt hash
+  const plainPassword = process.env.ADMIN_PASSWORD;
   const hash = process.env.ADMIN_PASSWORD_HASH;
-  if (!hash) {
-    return res.status(500).json({ error: "Server misconfigured — set ADMIN_PASSWORD_HASH" });
+
+  if (!plainPassword && !hash) {
+    return res.status(500).json({ error: "Server misconfigured — set ADMIN_PASSWORD or ADMIN_PASSWORD_HASH" });
   }
 
-  const valid = await bcrypt.compare(password, hash);
+  let valid = false;
+  if (plainPassword) {
+    valid = password === plainPassword;
+  } else {
+    valid = await bcrypt.compare(password, hash);
+  }
+
   if (!valid) {
-    // Consistent timing to avoid timing attacks
     return res.status(401).json({ error: "Incorrect password" });
   }
 
