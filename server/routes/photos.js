@@ -91,12 +91,17 @@ router.post("/admin/photos", requireAuth, upload.single("file"), async (req, res
   const r2Key = `photos/${id}${ext}`;
 
   // Upload buffer directly to Cloudflare R2
-  await r2.send(new PutObjectCommand({
-    Bucket:      R2_BUCKET,
-    Key:         r2Key,
-    Body:        req.file.buffer,
-    ContentType: req.file.mimetype,
-  }));
+  try {
+    await r2.send(new PutObjectCommand({
+      Bucket:      R2_BUCKET,
+      Key:         r2Key,
+      Body:        req.file.buffer,
+      ContentType: req.file.mimetype,
+    }));
+  } catch (r2Err) {
+    console.error("[R2] upload error:", r2Err);
+    return res.status(500).json({ error: "R2 upload failed: " + (r2Err?.message || "check R2 credentials in Railway Variables") });
+  }
 
   let width = 0, height = 0;
   try {
