@@ -25,7 +25,9 @@ RUN cd server && npm ci --omit=dev
 
 COPY server ./server
 
-# Expose the port Fly routes to
+# Expose the port Railway routes to
 EXPOSE 8080
+
+ENV PORT=8080
 
 CMD ["node", "server/index.js"]
