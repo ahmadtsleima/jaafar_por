@@ -1,5 +1,5 @@
 # ── Stage 1: Build the Vite frontend ─────────────────────────────────────────
-FROM node:20-alpine AS builder
+FROM node:22-alpine AS builder
 
 WORKDIR /app
 
@@ -12,7 +12,7 @@ COPY . .
 RUN npm run build
 
 # ── Stage 2: Production server ────────────────────────────────────────────────
-FROM node:20-alpine
+FROM node:22-alpine
 
 WORKDIR /app
 
@@ -26,6 +26,6 @@ RUN cd server && npm ci --omit=dev
 COPY server ./server
 
 # Expose the port Fly routes to
-EXPOSE 3001
+EXPOSE 8080
 
 CMD ["node", "server/index.js"]
