@@ -1,6 +1,5 @@
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import { getAssetFromKV } from "@cloudflare/kv-asset-handler";
 
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
@@ -64,32 +63,43 @@ async function initDatabase(db) {
   dbInitialized = true;
 }
 
+function getContentType(pathname) {
+  const ext = pathname.split(".").pop().toLowerCase();
+  return {
+    html: "text/html; charset=utf-8",
+    css: "text/css; charset=utf-8",
+    js: "text/javascript; charset=utf-8",
+    json: "application/json; charset=utf-8",
+    svg: "image/svg+xml",
+    png: "image/png",
+    jpg: "image/jpeg",
+    jpeg: "image/jpeg",
+    gif: "image/gif",
+    ico: "image/x-icon",
+    webmanifest: "application/manifest+json",
+    map: "application/json",
+    txt: "text/plain; charset=utf-8",
+  }[ext] || "application/octet-stream";
+}
+
 async function serveStaticAsset(request, env, ctx) {
-  try {
-    return await getAssetFromKV({ request, env, waitUntil: ctx.waitUntil }, {
-      mapRequestToAsset: (req) => {
-        const url = new URL(req.url);
-        let pathname = url.pathname;
-        if (pathname.endsWith("/")) pathname += "index.html";
-        const accept = req.headers.get("Accept") || "";
-        if (!pathname.includes(".") && accept.includes("text/html")) {
-          return new Request(new URL("/index.html", req.url).toString(), req);
-        }
-        return req;
-      },
-    });
-  } catch (err) {
-    // Fallback to index.html for SPA navigation routes
-    if (request.method === "GET") {
-      const indexRequest = new Request(new URL("/index.html", request.url).toString(), request);
-      try {
-        return await getAssetFromKV({ request: indexRequest, env, waitUntil: ctx.waitUntil });
-      } catch (innerErr) {
-        return new Response("Not found", { status: 404, headers: CORS_HEADERS });
-      }
-    }
+  const url = new URL(request.url);
+  let pathname = url.pathname;
+  if (pathname.endsWith("/")) pathname += "index.html";
+  const accept = request.headers.get("Accept") || "";
+  if (!pathname.includes(".") && accept.includes("text/html")) {
+    pathname = "/index.html";
+  }
+
+  const assetKey = pathname.startsWith("/") ? pathname.slice(1) : pathname;
+  const asset = await env.__STATIC_CONTENT.get(assetKey, { type: "stream" });
+  if (!asset) {
     return new Response("Not found", { status: 404, headers: CORS_HEADERS });
   }
+
+  const headers = new Headers(CORS_HEADERS);
+  headers.set("content-type", getContentType(pathname));
+  return new Response(asset, { status: 200, headers });
 }
 
 function getToken(request) {
