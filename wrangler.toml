@@ -50,7 +50,7 @@ bucket_name = "jaafar-web1"
 preview_bucket_name = "jaafar-web1-preview"
 
 # Add D1 binding for production and dev (Wrangler expects env-level bindings)
-[env.production.d1_databases]
+[[env.production.d1_databases]]
 binding = "DB"
 database_id = "27af65af-c2c0-4dc3-8f71-5fb35c922e59"
 
