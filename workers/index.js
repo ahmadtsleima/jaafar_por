@@ -143,7 +143,7 @@ export default {
   async fetch(request, env) {
     const url = new URL(request.url);
     const method = request.method.toUpperCase();
-    const pathname = url.pathname;
+    const pathname = url.pathname.replace(/\/+$/, "") || "/";
 
     if (method === "OPTIONS") return handleOptions();
 

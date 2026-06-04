@@ -2,6 +2,8 @@ Deployment to Cloudflare (Wrangler)
 
 1) Fill `wrangler.toml`
 - Set `account_id` to your Cloudflare account ID.
+- Set `name` to the worker name you want to publish.
+  - Example: if you want `jaafarportof.ahmadsleiman562.workers.dev`, use `name = "jaafarportof"`.
 - Replace `your_bucket_name` values with the R2 bucket names for each environment.
 - Set `JWT_SECRET` and `FRONTEND_URL` in the appropriate `[env.*].vars` sections.
 

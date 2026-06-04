@@ -1,6 +1,6 @@
 # Wrangler config for Cloudflare Workers / R2
 # Fill in your account_id and bucket names before publishing.
-name = "jaafar-por-backend"
+name = "jaafarportof"
 type = "javascript"
 compatibility_date = "2026-06-04"
 account_id = "YOUR_CLOUDFLARE_ACCOUNT_ID"
