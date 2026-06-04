@@ -66,7 +66,7 @@ async function initDatabase(db) {
 
 async function serveStaticAsset(request, env, ctx) {
   try {
-    return await getAssetFromKV({ request, waitUntil: ctx.waitUntil }, {
+    return await getAssetFromKV({ request, env, waitUntil: ctx.waitUntil }, {
       mapRequestToAsset: (req) => {
         const url = new URL(req.url);
         let pathname = url.pathname;
@@ -83,7 +83,7 @@ async function serveStaticAsset(request, env, ctx) {
     if (request.method === "GET") {
       const indexRequest = new Request(new URL("/index.html", request.url).toString(), request);
       try {
-        return await getAssetFromKV({ request: indexRequest, waitUntil: ctx.waitUntil });
+        return await getAssetFromKV({ request: indexRequest, env, waitUntil: ctx.waitUntil });
       } catch (innerErr) {
         return new Response("Not found", { status: 404, headers: CORS_HEADERS });
       }
