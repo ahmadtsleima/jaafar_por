@@ -1,13 +1,24 @@
 /* ─── Admin shell ────────────────────────────────────────────── */
 
+:root{
+  --adm-bg: #0f1720;
+  --adm-panel: #0b1220;
+  --adm-surface: #0f1724;
+  --adm-muted: #9ba3ad;
+  --adm-accent: #c9a96e;
+  --adm-accent-2: #d4b896;
+  --adm-text: #e9eef3;
+  --adm-radius: 8px;
+}
+
 .adm-shell {
   display: grid;
-  grid-template-columns: 220px 1fr;
+  grid-template-columns: 240px 1fr;
   min-height: 100vh;
-  background: #f5f5f3;
+  background: linear-gradient(180deg, #071018 0%, #08121a 100%);
   font-family: Inter, system-ui, sans-serif;
   font-size: 14px;
-  color: #111;
+  color: var(--adm-text);
 }
 
 /* ─── Sidebar ─────────────────────────────────────────────────── */
@@ -15,21 +26,22 @@
 .adm-sidebar {
   display: flex;
   flex-direction: column;
-  background: #0a0a0a;
-  color: #fff;
+  background: var(--adm-panel);
+  color: var(--adm-text);
   padding: 0;
   position: sticky;
   top: 0;
   height: 100vh;
   overflow-y: auto;
+  box-shadow: 0 4px 18px rgba(2,6,23,0.6);
 }
 
 .adm-sidebar-logo {
   padding: 28px 24px 24px;
-  font-size: 22px;
+  font-size: 20px;
   font-weight: 800;
   letter-spacing: -0.04em;
-  color: #c9a96e;
+  color: var(--adm-accent);
 }
 
 .adm-sidebar-nav {
@@ -56,8 +68,8 @@
 }
 
 .adm-sidebar-link:hover {
-  color: #fff;
-  background: rgba(255, 255, 255, 0.05);
+  color: var(--adm-text);
+  background: rgba(201,169,110,0.04);
 }
 
 .adm-sidebar-link.is-active {
@@ -90,9 +102,9 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 20px 32px;
-  background: #fff;
-  border-bottom: 1px solid #e8e8e6;
+  padding: 18px 28px;
+  background: linear-gradient(90deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+  border-bottom: 1px solid rgba(255,255,255,0.03);
   position: sticky;
   top: 0;
   z-index: 10;
@@ -103,6 +115,7 @@
   font-weight: 700;
   letter-spacing: -0.02em;
   margin: 0;
+  color: var(--adm-text);
 }
 
 .adm-topbar-site {
@@ -115,7 +128,16 @@
 
 .adm-content {
   flex: 1;
-  padding: 32px;
+  padding: 28px;
+}
+
+/* Panels */
+.adm-panel-card {
+  background: var(--adm-surface);
+  border-radius: var(--adm-radius);
+  padding: 18px;
+  box-shadow: 0 6px 22px rgba(3,8,16,0.6);
+  border: 1px solid rgba(255,255,255,0.02);
 }
 
 /* ─── Login ───────────────────────────────────────────────────── */
