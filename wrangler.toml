@@ -3,6 +3,7 @@
 name = "jaafarportof"
 type = "javascript"
 compatibility_date = "2026-06-04"
+compatibility_flags = ["nodejs_compat"]
 account_id = "b9a37bd4d9ab04f8f3686130e5f764a6"
 main = "workers/index.js"
 
