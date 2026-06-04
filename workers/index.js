@@ -379,6 +379,22 @@ export default {
       return jsonResponse({ success: true });
     }
 
+    // Allow direct PUT to /r2/:key for client uploads (requires auth in production)
+    if (method === "PUT" && pathname.startsWith("/r2/")) {
+      const key = decodeURIComponent(pathname.replace("/r2/", ""));
+      try {
+        // Stream request body directly into R2. Be careful: ensure you require auth if exposing this publicly.
+        await env.R2_BUCKET.put(key, request.body, {
+          httpMetadata: { contentType: request.headers.get("content-type") || "application/octet-stream" },
+        });
+
+        const headers = { "content-type": "application/json", Allow: "PUT, GET, OPTIONS", ...CORS_HEADERS };
+        return new Response(JSON.stringify({ key, url: buildR2Url(key) }), { status: 201, headers });
+      } catch (err) {
+        return jsonResponse({ error: err.message }, 500);
+      }
+    }
+
     if (method === "GET" && pathname.startsWith("/r2/")) {
       const key = decodeURIComponent(pathname.replace("/r2/", ""));
       const object = await env.R2_BUCKET.get(key);
