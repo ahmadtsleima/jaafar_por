@@ -42,8 +42,8 @@ preview_bucket_name = "jaafar-web1-dev-preview"
 account_id = "b9a37bd4d9ab04f8f3686130e5f764a6"
 [env.production.vars]
 FRONTEND_URL = "https://your-frontend.example"
-JWT_SECRET = "replace_with_production_jwt_secret"
-ADMIN_PASSWORD = ""
+JWT_SECRET = "28829ecf49bf1b1efea62cd0db161eab5ac1d42e30a005a74b1d9df28022eb277340c3d07cc2f310bdacd05aa2c1116f"
+ADMIN_PASSWORD = "AVFXBnMZF(FKS>M@"
 ADMIN_PASSWORD_HASH = ""
 [[env.production.r2_buckets]]
 binding = "R2_BUCKET"
