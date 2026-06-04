@@ -16,16 +16,16 @@ FRONTEND_URL = "https://your-frontend.example"
 # Bind D1 and R2 to the Worker (replace placeholders with real IDs/names).
 [[d1_databases]]
 binding = "DB"
-database_id = "REPLACE_WITH_D1_ID"
+database_id = "27af65af-c2c0-4dc3-8f71-5fb35c922e59"
 
 [[r2_buckets]]
 binding = "R2_BUCKET"
-bucket_name = "jaafar-r2-bucket"
-preview_bucket_name = "jaafar-r2-bucket-preview"
+bucket_name = "jaafar-web1"
+preview_bucket_name = "jaafar-web1-preview"
 
 # Development environment (used with `wrangler dev` and `--env dev`)
 [env.dev]
-account_id = "YOUR_CLOUDFLARE_ACCOUNT_ID"
+account_id = "b9a37bd4d9ab04f8f3686130e5f764a6"
 [env.dev.vars]
 FRONTEND_URL = "http://localhost:5173"
 JWT_SECRET = "dev_jwt_secret"
@@ -33,12 +33,12 @@ ADMIN_PASSWORD = ""
 ADMIN_PASSWORD_HASH = ""
 [[env.dev.r2_buckets]]
 binding = "R2_BUCKET"
-bucket_name = "jaafar-r2-bucket-dev"
-preview_bucket_name = "jaafar-r2-bucket-dev-preview"
+bucket_name = "jaafar-web1-dev"
+preview_bucket_name = "jaafar-web1-dev-preview"
 
 # Production environment
 [env.production]
-account_id = "YOUR_CLOUDFLARE_ACCOUNT_ID"
+account_id = "b9a37bd4d9ab04f8f3686130e5f764a6"
 [env.production.vars]
 FRONTEND_URL = "https://your-frontend.example"
 JWT_SECRET = "replace_with_production_jwt_secret"
@@ -46,13 +46,13 @@ ADMIN_PASSWORD = ""
 ADMIN_PASSWORD_HASH = ""
 [[env.production.r2_buckets]]
 binding = "R2_BUCKET"
-bucket_name = "jaafar-r2-bucket"
-preview_bucket_name = "jaafar-r2-bucket-preview"
+bucket_name = "jaafar-web1"
+preview_bucket_name = "jaafar-web1-preview"
 
 # Add D1 binding for production and dev (Wrangler expects env-level bindings)
 [env.production.d1_databases]
 binding = "DB"
-database_id = "REPLACE_WITH_D1_ID"
+database_id = "27af65af-c2c0-4dc3-8f71-5fb35c922e59"
 
 # Optional: add routes if deploying to a specific domain
 # routes = ["api.yourdomain.com/*"]
