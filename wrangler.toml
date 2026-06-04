@@ -40,6 +40,7 @@ preview_bucket_name = "jaafar-web1-dev-preview"
 # Production environment
 [env.production]
 account_id = "b9a37bd4d9ab04f8f3686130e5f764a6"
+routes = ["jaafarsleiman.com/api/*"]
 [env.production.vars]
 FRONTEND_URL = "https://your-frontend.example"
 JWT_SECRET = "28829ecf49bf1b1efea62cd0db161eab5ac1d42e30a005a74b1d9df28022eb277340c3d07cc2f310bdacd05aa2c1116f"
