@@ -493,9 +493,9 @@ function CompareWidget({ item, onImageError }) {
       aria-valuenow={Math.round(position)}
       tabIndex={0}
     >
-      <img className="compare-before" src={item.before} alt={`${item.title} before edit`} onError={onImageError} draggable="false" />
+      <img className="compare-before" src={item.before} alt={`${item.title} before edit`} onError={onImageError} draggable="false" loading="lazy" />
       <div className="compare-after" aria-hidden="true">
-        <img src={item.after} alt="" onError={onImageError} draggable="false" />
+        <img src={item.after} alt="" onError={onImageError} draggable="false" loading="lazy" />
       </div>
       <div className="compare-divider" aria-hidden="true">
         <span></span>
@@ -858,7 +858,7 @@ function SelectedFrames({ onImageError }) {
                     key={`${activeFilter}-${itemIndex}-${item.id || item.title}`}
                   >
                     <div className="selected-card-media">
-                      <img src={item.src} alt={item.alt} onError={onImageError} />
+                      <img src={item.src} alt={item.alt} onError={onImageError} loading="lazy" />
                     </div>
                     <div className="selected-card-caption">
                       <span>#{String(itemIndex + 1).padStart(2, "0")}</span>
@@ -1129,7 +1129,7 @@ function VideoProjects() {
                       {slotIndex === 1 ? (
                         <video src={item.src} poster={item.poster} muted playsInline loop autoPlay preload="metadata" />
                       ) : item.poster ? (
-                        <img src={item.poster} alt="" />
+                        <img src={item.poster} alt="" loading="lazy" />
                       ) : (
                         <video src={item.src} muted playsInline preload="metadata" />
                       )}
@@ -1256,7 +1256,7 @@ function PhotoDisplay({ onImageError }) {
               ref={(element) => { imageRefs.current[index] = element; }}
               key={image.alt || index}
             >
-              <img src={image.src} alt={image.alt} onError={onImageError} />
+              <img src={image.src} alt={image.alt} onError={onImageError} loading="lazy" />
               <figcaption>{image.label}</figcaption>
             </figure>
           ))}
@@ -1351,7 +1351,7 @@ function Services({ onImageError }) {
 
         <div className="svc-cards-grid">
           <div className="svc-card-v2">
-            {servicePhotos.brands.src && <img className="svc-card-bg" src={servicePhotos.brands.src} alt="" onError={onImageError} />}
+            {servicePhotos.brands.src && <img className="svc-card-bg" src={servicePhotos.brands.src} alt="" onError={onImageError} loading="lazy" />}
             <div className="svc-card-top-line"></div>
             <p className="svc-card-tagline">Your brand, visually defined.</p>
             <h3>Brand Identity Shoots</h3>
@@ -1360,7 +1360,7 @@ function Services({ onImageError }) {
           </div>
 
           <div className="svc-card-v2">
-            {servicePhotos.fashion.src && <img className="svc-card-bg" src={servicePhotos.fashion.src} alt="" onError={onImageError} />}
+            {servicePhotos.fashion.src && <img className="svc-card-bg" src={servicePhotos.fashion.src} alt="" onError={onImageError} loading="lazy" />}
             <div className="svc-card-top-line"></div>
             <p className="svc-card-tagline">Clarity behind the visuals.</p>
             <h3>Fashion Editorial</h3>
@@ -1369,7 +1369,7 @@ function Services({ onImageError }) {
           </div>
 
           <div className="svc-card-v2">
-            {servicePhotos.events.src && <img className="svc-card-bg" src={servicePhotos.events.src} alt="" onError={onImageError} />}
+            {servicePhotos.events.src && <img className="svc-card-bg" src={servicePhotos.events.src} alt="" onError={onImageError} loading="lazy" />}
             <div className="svc-card-top-line"></div>
             <p className="svc-card-tagline">Ongoing expert guidance.</p>
             <h3>Event Coverage</h3>
@@ -1435,6 +1435,7 @@ function About({ onImageError }) {
               src={aboutSrc}
               alt={aboutAlt}
               onError={onImageError}
+              loading="lazy"
             />
           </div>
         </div>

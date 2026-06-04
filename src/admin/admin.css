@@ -386,6 +386,22 @@
   font-size: 12px;
   color: #888;
   margin-bottom: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.adm-upload-savings {
+  font-size: 11px;
+  color: #28a745;
+  font-weight: 500;
+}
+
+.adm-upload-status {
+  font-size: 12px;
+  color: #666;
+  padding: 8px 0;
+  font-style: italic;
 }
 
 .adm-upload-warn {
@@ -396,6 +412,35 @@
   font-size: 13px;
   color: #8a6000;
   margin-bottom: 16px;
+}
+
+.adm-upload-progress-container {
+  margin: 16px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.adm-upload-progress-bar {
+  height: 6px;
+  background: #eee;
+  border-radius: 3px;
+  overflow: hidden;
+  border: 1px solid #ddd;
+}
+
+.adm-upload-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #c9a96e, #d4b896);
+  transition: width 150ms ease;
+  box-shadow: 0 0 8px rgba(201, 169, 110, 0.4);
+}
+
+.adm-upload-progress-text {
+  font-size: 12px;
+  color: #888;
+  text-align: center;
+  margin: 0;
 }
 
 .adm-upload-fields {

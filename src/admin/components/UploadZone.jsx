@@ -1,10 +1,12 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { SLOTS } from "../data/slots.js";
 import SlotSelector from "./SlotSelector.jsx";
 import { api } from "../api.js";
+import imageCompression from "browser-image-compression";
 
 export default function UploadZone({ onUploaded }) {
   const [file, setFile] = useState(null);
+  const [originalFile, setOriginalFile] = useState(null);
   const [preview, setPreview] = useState(null);
   const [dims, setDims] = useState(null);
   const [slot, setSlot] = useState(SLOTS[0].id);
@@ -14,18 +16,62 @@ export default function UploadZone({ onUploaded }) {
   const [sortOrder, setSortOrder] = useState(0);
   const [publishNow, setPublishNow] = useState(true);
   const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const [dragOver, setDragOver] = useState(false);
+  const [compressing, setCompressing] = useState(false);
+  const [savedBytes, setSavedBytes] = useState(0);
   const inputRef = useRef(null);
 
-  const acceptFile = (f) => {
+  const acceptFile = async (f) => {
     if (!f || !f.type.startsWith("image/")) return;
-    setFile(f);
-    const reader = new FileReader();
-    reader.onload = (e) => setPreview(e.target.result);
-    reader.readAsDataURL(f);
-    const img = new Image();
-    img.onload = () => setDims({ w: img.naturalWidth, h: img.naturalHeight, size: f.size });
-    img.src = URL.createObjectURL(f);
+    setOriginalFile(f);
+    setCompressing(true);
+    setSavedBytes(0);
+
+    try {
+      // Compress image client-side
+      const options = {
+        maxSizeMB: 2,
+        maxWidthOrHeight: 4000,
+        useWebWorker: true,
+        alwaysKeepResolution: true,
+        fileType: "image/webp",
+      };
+
+      const compressed = await imageCompression(f, options);
+      const originalSize = f.size;
+      const compressedSize = compressed.size;
+      const saved = originalSize - compressedSize;
+      setSavedBytes(saved);
+
+      // Create new File object with WebP type
+      const webpFile = new File([compressed], f.name.replace(/\.[^.]+$/, ".webp"), {
+        type: "image/webp",
+      });
+
+      setFile(webpFile);
+
+      const reader = new FileReader();
+      reader.onload = (e) => setPreview(e.target.result);
+      reader.readAsDataURL(webpFile);
+
+      const img = new Image();
+      img.onload = () =>
+        setDims({ w: img.naturalWidth, h: img.naturalHeight, size: compressedSize, original: originalSize });
+      img.src = URL.createObjectURL(webpFile);
+    } catch (err) {
+      console.error("Compression failed:", err);
+      // Fallback to original file if compression fails
+      setFile(f);
+      const reader = new FileReader();
+      reader.onload = (e) => setPreview(e.target.result);
+      reader.readAsDataURL(f);
+      const img = new Image();
+      img.onload = () => setDims({ w: img.naturalWidth, h: img.naturalHeight, size: f.size });
+      img.src = URL.createObjectURL(f);
+    } finally {
+      setCompressing(false);
+    }
   };
 
   const onDrop = (e) => {
@@ -45,6 +91,7 @@ export default function UploadZone({ onUploaded }) {
     e.preventDefault();
     if (!file) return;
     setUploading(true);
+    setUploadProgress(0);
     try {
       const fd = new FormData();
       fd.append("file", file);
@@ -54,8 +101,29 @@ export default function UploadZone({ onUploaded }) {
       fd.append("alt_text", altText);
       fd.append("sort_order", String(sortOrder));
       fd.append("published", String(publishNow));
+
+      // Simulate progress (0-90% during upload, complete at 100%)
+      const progressInterval = setInterval(() => {
+        setUploadProgress((prev) => Math.min(prev + Math.random() * 20, 90));
+      }, 300);
+
       await api.photos.upload(fd);
+      clearInterval(progressInterval);
+      setUploadProgress(100);
       onUploaded?.();
+
+      // Reset form
+      setTimeout(() => {
+        setFile(null);
+        setOriginalFile(null);
+        setPreview(null);
+        setDims(null);
+        setTitle("");
+        setAltText("");
+        setSortOrder(0);
+        setUploadProgress(0);
+        setSavedBytes(0);
+      }, 800);
     } catch (err) {
       alert("Upload failed: " + err.message);
     } finally {
@@ -91,7 +159,18 @@ export default function UploadZone({ onUploaded }) {
 
       {dims && (
         <div className="adm-upload-dims">
-          {dims.w} × {dims.h} px · {(dims.size / 1024).toFixed(0)} KB
+          <div>{dims.w} × {dims.h} px · {(dims.size / 1024).toFixed(0)} KB</div>
+          {dims.original && savedBytes > 0 && (
+            <div className="adm-upload-savings">
+              ✓ Compressed: {(dims.original / 1024).toFixed(0)} KB → {(dims.size / 1024).toFixed(0)} KB (saved {(savedBytes / 1024).toFixed(0)} KB)
+            </div>
+          )}
+        </div>
+      )}
+
+      {compressing && (
+        <div className="adm-upload-status">
+          <span>Compressing image...</span>
         </div>
       )}
 
@@ -159,12 +238,24 @@ export default function UploadZone({ onUploaded }) {
         </label>
       </div>
 
+      {uploading && (
+        <div className="adm-upload-progress-container">
+          <div className="adm-upload-progress-bar">
+            <div
+              className="adm-upload-progress-fill"
+              style={{ width: `${Math.round(uploadProgress)}%` }}
+            />
+          </div>
+          <p className="adm-upload-progress-text">{Math.round(uploadProgress)}%</p>
+        </div>
+      )}
+
       <button
         className="adm-btn adm-btn-primary"
         type="submit"
-        disabled={!file || !altText || uploading}
+        disabled={!file || !altText || uploading || compressing}
       >
-        {uploading ? "Uploading…" : "Upload photo →"}
+        {uploading ? `Uploading ${Math.round(uploadProgress)}%…` : compressing ? "Compressing…" : "Upload photo →"}
       </button>
     </form>
   );
