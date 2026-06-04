@@ -85,15 +85,26 @@ function getContentType(pathname) {
 async function serveStaticAsset(request, env, ctx) {
   const url = new URL(request.url);
   let pathname = url.pathname;
-  if (pathname.endsWith("/")) pathname += "index.html";
   const accept = request.headers.get("Accept") || "";
-  if (!pathname.includes(".") && accept.includes("text/html")) {
+  const isHtmlRequest = accept.includes("text/html");
+
+  if (!pathname.includes(".") && isHtmlRequest) {
     pathname = "/index.html";
+  } else if (pathname.endsWith("/")) {
+    pathname += "index.html";
   }
 
   const assetKey = pathname.startsWith("/") ? pathname.slice(1) : pathname;
   const asset = await env.__STATIC_CONTENT.get(assetKey, { type: "stream" });
   if (!asset) {
+    if (isHtmlRequest) {
+      const fallback = await env.__STATIC_CONTENT.get("index.html", { type: "stream" });
+      if (fallback) {
+        const headers = new Headers(CORS_HEADERS);
+        headers.set("content-type", getContentType("/index.html"));
+        return new Response(fallback, { status: 200, headers });
+      }
+    }
     return new Response("Not found", { status: 404, headers: CORS_HEADERS });
   }
 
