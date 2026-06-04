@@ -1,5 +1,6 @@
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
+import { getAssetFromKV } from "@cloudflare/kv-asset-handler";
 
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
@@ -61,6 +62,34 @@ async function initDatabase(db) {
     await db.prepare(sql).run();
   }
   dbInitialized = true;
+}
+
+async function serveStaticAsset(request, env, ctx) {
+  try {
+    return await getAssetFromKV({ request, waitUntil: ctx.waitUntil }, {
+      mapRequestToAsset: (req) => {
+        const url = new URL(req.url);
+        let pathname = url.pathname;
+        if (pathname.endsWith("/")) pathname += "index.html";
+        const accept = req.headers.get("Accept") || "";
+        if (!pathname.includes(".") && accept.includes("text/html")) {
+          return new Request(new URL("/index.html", req.url).toString(), req);
+        }
+        return req;
+      },
+    });
+  } catch (err) {
+    // Fallback to index.html for SPA navigation routes
+    if (request.method === "GET") {
+      const indexRequest = new Request(new URL("/index.html", request.url).toString(), request);
+      try {
+        return await getAssetFromKV({ request: indexRequest, waitUntil: ctx.waitUntil });
+      } catch (innerErr) {
+        return new Response("Not found", { status: 404, headers: CORS_HEADERS });
+      }
+    }
+    return new Response("Not found", { status: 404, headers: CORS_HEADERS });
+  }
 }
 
 function getToken(request) {
@@ -140,7 +169,7 @@ async function queryVideos(db, { slot, all = false }) {
 }
 
 export default {
-  async fetch(request, env) {
+  async fetch(request, env, ctx) {
     const url = new URL(request.url);
     const method = request.method.toUpperCase();
     const pathname = url.pathname.replace(/\/+$/, "") || "/";
@@ -403,6 +432,10 @@ export default {
       if (object.httpMetadata?.contentType) headers.set("content-type", object.httpMetadata.contentType);
       if (object.size) headers.set("content-length", String(object.size));
       return new Response(object.body, { status: 200, headers });
+    }
+
+    if (method === "GET" && !pathname.startsWith("/api/")) {
+      return await serveStaticAsset(request, env, ctx);
     }
 
     return jsonResponse({ error: "Not found" }, 404);
