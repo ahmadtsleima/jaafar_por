@@ -59,18 +59,20 @@ export default function Photos() {
         {loading ? (
           <div className="adm-loading">Loading…</div>
         ) : (
-          <PhotoGrid
-            photos={photos}
-            onUpdate={(id, data) =>
-              api.photos.update(id, data).then(() => fetchPhotos()).catch(console.error)
-            }
-            onRemove={(id) =>
-              api.photos.remove(id).then(fetchPhotos).catch(console.error)
-            }
-            onReorder={(items) =>
-              api.photos.reorder(items).then(fetchPhotos).catch(console.error)
-            }
-          />
+          <div className="adm-panel-card">
+            <PhotoGrid
+              photos={photos}
+              onUpdate={(id, data) =>
+                api.photos.update(id, data).then(() => fetchPhotos()).catch(console.error)
+              }
+              onRemove={(id) =>
+                api.photos.remove(id).then(fetchPhotos).catch(console.error)
+              }
+              onReorder={(items) =>
+                api.photos.reorder(items).then(fetchPhotos).catch(console.error)
+              }
+            />
+          </div>
         )}
       </div>
     </div>

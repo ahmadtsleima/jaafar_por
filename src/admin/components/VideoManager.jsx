@@ -108,8 +108,9 @@ export default function VideoManager({ slot, label, notes }) {
         </div>
       </div>
 
-      <div className="adm-video-workspace">
-        <div
+      <div className="adm-panel-card">
+        <div className="adm-video-workspace">
+          <div
           className={`adm-video-upload${dragOver ? " is-dragging" : ""}${uploading ? " is-uploading" : ""}`}
           onClick={() => inputRef.current?.click()}
           onDragOver={(event) => { event.preventDefault(); setDragOver(true); }}
@@ -148,9 +149,9 @@ export default function VideoManager({ slot, label, notes }) {
               event.target.value = "";
             }}
           />
-        </div>
+          </div>
 
-        <div className="adm-video-library">
+          <div className="adm-video-library">
           <div className="adm-video-library-head">
             <div>
               <strong>Library</strong>
@@ -195,6 +196,7 @@ export default function VideoManager({ slot, label, notes }) {
               <span>Upload one to activate this slot.</span>
             </div>
           )}
+          </div>
         </div>
       </div>
     </section>

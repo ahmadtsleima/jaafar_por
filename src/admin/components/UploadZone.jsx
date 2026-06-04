@@ -132,7 +132,8 @@ export default function UploadZone({ onUploaded }) {
   };
 
   return (
-    <form className="adm-upload-form" onSubmit={handleSubmit}>
+    <div className="adm-panel-card">
+      <form className="adm-upload-form" onSubmit={handleSubmit}>
       <div
         className={`adm-dropzone${dragOver ? " drag-over" : ""}${file ? " has-file" : ""}`}
         onClick={() => inputRef.current?.click()}
@@ -257,6 +258,7 @@ export default function UploadZone({ onUploaded }) {
       >
         {uploading ? `Uploading ${Math.round(uploadProgress)}%…` : compressing ? "Compressing…" : "Upload photo →"}
       </button>
-    </form>
+      </form>
+    </div>
   );
 }
