@@ -13,6 +13,15 @@ Deployment to Cloudflare (Wrangler)
 - For Workers, prefer using Wrangler `vars`/`env` or Cloudflare dashboard secrets (`wrangler secret put`) for sensitive values.
 - Example: `wrangler secret put JWT_SECRET --env production`
 
+Worker notes:
+- The Worker exposes an upload endpoint at `/api/admin/photos` and serves files at `/r2/:key`.
+- The `R2_BUCKET` binding in `wrangler.toml` must match the binding name used in the Worker (currently `R2_BUCKET`).
+- Use `wrangler dev` to test the Worker locally and `wrangler publish --env production` to deploy.
+
+Frontend notes:
+- The admin frontend already posts `FormData` to `/api/admin/photos` (via the `api.photos.upload` helper). When you deploy the Worker to the same domain as the frontend, uploads will go to the Worker endpoint and be saved to R2.
+- For local development, the existing Node backend will continue to handle `/api` routes unless you run `wrangler dev` and point the frontend to the worker preview URL (set `VITE_API_URL` accordingly).
+
 4) Publish
 - Development preview: `npm run deploy:wrangler:dev`
 - Production publish: `npm run deploy:wrangler` (or `npm run deploy:wrangler:prod`)

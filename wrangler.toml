@@ -4,6 +4,7 @@ name = "jaafar-por-backend"
 type = "javascript"
 compatibility_date = "2026-06-04"
 account_id = "YOUR_CLOUDFLARE_ACCOUNT_ID"
+main = "workers/index.js"
 
 # Global vars available to all environments (override per env below)
 [vars]
