@@ -740,18 +740,18 @@ function SelectedFrames({ onImageError }) {
   }, []);
 
   const items = useMemo(() => {
-    if (apiPhotos) {
-      return apiPhotos
-        .filter((p) => String(p.slot || "").startsWith("gallery_"))
-        .map((p) => ({
-          id: p.id,
-          src: p.url,
-          alt: p.alt_text,
-          category: photoCategories.find((filter) => filter.toLowerCase() === String(p.category || "").toLowerCase()) || photoCategories[0],
-          title: p.title || "",
-        }));
-    }
-    return [];
+    if (!apiPhotos) return [];
+
+    const galleryPhotos = apiPhotos.filter((p) => String(p.slot || "").startsWith("gallery_"));
+    const photosToShow = galleryPhotos.length > 0 ? galleryPhotos : apiPhotos;
+
+    return photosToShow.map((p) => ({
+      id: p.id,
+      src: p.url,
+      alt: p.alt_text,
+      category: photoCategories.find((filter) => filter.toLowerCase() === String(p.category || "").toLowerCase()) || photoCategories[0],
+      title: p.title || "",
+    }));
   }, [apiPhotos, photoCategories]);
 
   const filteredItems = useMemo(() => {
