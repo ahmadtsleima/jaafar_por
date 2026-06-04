@@ -960,6 +960,28 @@
   font-size: 12px;
 }
 
+.adm-video-progress-container {
+  margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.adm-video-progress-bar {
+  height: 4px;
+  background: #eee;
+  border-radius: 2px;
+  overflow: hidden;
+  border: 1px solid #ddd;
+}
+
+.adm-video-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #c9a96e, #d4b896);
+  transition: width 200ms ease;
+  box-shadow: 0 0 6px rgba(201, 169, 110, 0.3);
+}
+
 .adm-video-library {
   min-width: 0;
 }

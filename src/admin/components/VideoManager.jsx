@@ -18,6 +18,7 @@ export default function VideoManager({ slot, label, notes }) {
   const [videos, setVideos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const [dragOver, setDragOver] = useState(false);
   const [validations, setValidations] = useState(null);
   const [message, setMessage] = useState("");
@@ -45,21 +46,42 @@ export default function VideoManager({ slot, label, notes }) {
       return;
     }
 
+    // Check file sizes and warn if large
+    const totalSize = files.reduce((sum, f) => sum + f.size, 0);
+    const totalMB = (totalSize / (1024 * 1024)).toFixed(1);
+    if (totalMB > 200) {
+      setError(`Total size (${totalMB} MB) exceeds recommended limit. Videos may take 2-5+ minutes to upload. Try splitting into smaller files.`);
+      return;
+    }
+
     setUploading(true);
+    setUploadProgress(0);
     setValidations(null);
     setError("");
-    setMessage("");
+    setMessage(`Uploading ${totalMB} MB...`);
 
     try {
       const fd = new FormData();
       files.forEach((file) => fd.append(files.length === 1 ? "file" : "files", file));
       fd.append("slot", slot);
+      
+      // Simulate progress (0-90% during upload)
+      const progressInterval = setInterval(() => {
+        setUploadProgress((prev) => Math.min(prev + Math.random() * 15, 90));
+      }, 500);
+
       const result = await api.videos.upload(fd);
+      clearInterval(progressInterval);
+      setUploadProgress(100);
       setValidations(result.validations);
-      setMessage(`${files.length} video${files.length === 1 ? "" : "s"} uploaded${isMotionSlot ? " and published" : " as staged"}.`);
+      setMessage(`✓ ${files.length} video${files.length === 1 ? "" : "s"} uploaded${isMotionSlot ? " and published" : " as staged"}.`);
       fetchVideos();
+      
+      setTimeout(() => {
+        setUploadProgress(0);
+      }, 1000);
     } catch (err) {
-      setError(`Upload failed: ${err.message}`);
+      setError(`Upload failed: ${err.message}. For large videos (>100 MB), try uploading one at a time.`);
     } finally {
       setUploading(false);
     }
@@ -102,10 +124,20 @@ export default function VideoManager({ slot, label, notes }) {
           role="button"
           tabIndex={0}
         >
-          <span className="adm-video-upload-icon">{uploading ? "..." : "+"}</span>
-          <strong>{uploading ? "Uploading" : "Add video"}</strong>
+          <span className="adm-video-upload-icon">{uploading ? "⦘" : "+"}</span>
+          <strong>{uploading ? `Uploading ${Math.round(uploadProgress)}%` : "Add video"}</strong>
           <p>{isMotionSlot ? "Drop multiple project videos here." : "Drop the replacement video here."}</p>
           <small>{isMotionSlot ? "Auto-publishes to the landing carousel." : "Upload stays staged until you publish it."}</small>
+          {uploading && (
+            <div className="adm-video-progress-container">
+              <div className="adm-video-progress-bar">
+                <div
+                  className="adm-video-progress-fill"
+                  style={{ width: `${Math.round(uploadProgress)}%` }}
+                />
+              </div>
+            </div>
+          )}
           <input
             ref={inputRef}
             type="file"
