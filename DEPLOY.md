@@ -5,13 +5,15 @@ Deployment to Cloudflare (Wrangler)
 - Replace `your_bucket_name` values with the R2 bucket names for each environment.
 - Set `JWT_SECRET` and `FRONTEND_URL` in the appropriate `[env.*].vars` sections.
 
-2) Configure R2 and API token
-- In Cloudflare dashboard create an R2 bucket.
-- Create an API token with R2 Object Read & Write and add the access keys if you need programmatic access.
+2) Configure Cloudflare resources
+- In the Cloudflare dashboard create an R2 bucket.
+- Create a D1 database, and give it a name such as `portfolio_db`.
+- In `wrangler.toml`, the Worker binds `R2_BUCKET` and `DB` for R2 and D1 access.
 
 3) Environment secrets / variables
 - For Workers, prefer using Wrangler `vars`/`env` or Cloudflare dashboard secrets (`wrangler secret put`) for sensitive values.
 - Example: `wrangler secret put JWT_SECRET --env production`
+- Also set `ADMIN_PASSWORD` or `ADMIN_PASSWORD_HASH` for login.
 
 Worker notes:
 - The Worker exposes an upload endpoint at `/api/admin/photos` and serves files at `/r2/:key`.

@@ -14,10 +14,15 @@
   },
   "dependencies": {
     "@vitejs/plugin-react": "^5.1.1",
+    "bcryptjs": "^2.4.3",
+    "jsonwebtoken": "^9.0.2",
     "ogl": "^1.0.11",
     "react": "^19.2.1",
     "react-dom": "^19.2.1",
     "three": "^0.160.1",
     "vite": "^7.2.7"
+  },
+  "devDependencies": {
+    "wrangler": "^3.0.0"
   }
 }

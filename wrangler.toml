@@ -9,9 +9,15 @@ main = "workers/index.js"
 # Global vars available to all environments (override per env below)
 [vars]
 JWT_SECRET = ""
+ADMIN_PASSWORD = ""
+ADMIN_PASSWORD_HASH = ""
 FRONTEND_URL = "https://your-frontend.example"
 
-# Bind an R2 bucket to the Worker. Replace bucket_name with your R2 bucket.
+# Bind D1 and R2 to the Worker.
+[[d1_databases]]
+binding = "DB"
+database_name = "portfolio_db"
+
 [[r2_buckets]]
 binding = "R2_BUCKET"
 bucket_name = "your_bucket_name"
