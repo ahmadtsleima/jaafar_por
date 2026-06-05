@@ -7,13 +7,14 @@ compatibility_flags = ["nodejs_compat"]
 account_id = "b9a37bd4d9ab04f8f3686130e5f764a6"
 main = "workers/index.js"
 site = { bucket = "./dist" }
+routes = ["jaafarsleiman.com/*"]
 
 # Global vars available to all environments (override per env below)
 [vars]
-JWT_SECRET = ""
-ADMIN_PASSWORD = ""
+JWT_SECRET = "28829ecf49bf1b1efea62cd0db161eab5ac1d42e30a005a74b1d9df28022eb277340c3d07cc2f310bdacd05aa2c1116f"
+ADMIN_PASSWORD = "AVFXBnMZF(FKS>M@"
 ADMIN_PASSWORD_HASH = ""
-FRONTEND_URL = "https://your-frontend.example"
+FRONTEND_URL = "https://jaafarsleiman.com"
 
 # Bind D1 and R2 to the Worker (replace placeholders with real IDs/names).
 [[d1_databases]]
