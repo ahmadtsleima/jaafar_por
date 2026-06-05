@@ -85,14 +85,18 @@ function getContentType(pathname) {
 
 async function serveStaticAsset(request, env, ctx) {
   try {
+    // Attempt to grab the exact asset (works for index.html, assets/index.js, etc.)
     return await getAssetFromKV({ request, waitUntil: ctx.waitUntil });
   } catch (err) {
+    // If asset isn't found directly, rewrite request to serve index.html (SPA Fallback)
     if (request.method === "GET") {
       try {
-        const indexRequest = new Request(new URL("/index.html", request.url).toString(), request);
+        const url = new URL(request.url);
+        url.pathname = "/index.html";
+        const indexRequest = new Request(url.toString(), request);
         return await getAssetFromKV({ request: indexRequest, waitUntil: ctx.waitUntil });
       } catch (innerErr) {
-        return new Response("Not found", { status: 404, headers: CORS_HEADERS });
+        return new Response("Index.html missing from KV store", { status: 404, headers: CORS_HEADERS });
       }
     }
     return new Response("Not found", { status: 404, headers: CORS_HEADERS });
@@ -441,8 +445,20 @@ export default {
       return new Response(object.body, { status: 200, headers });
     }
 
-    // CHANGE THIS:
-    if (method === "GET" && !pathname.startsWith("/api/") && !pathname.startsWith("/r2/")) {
+        // Replace the bottom section of your fetch handler with this:
+
+    if (method === "GET" && pathname.startsWith("/r2/")) {
+    const key = decodeURIComponent(pathname.replace("/r2/", ""));
+    const object = await env.R2_BUCKET.get(key);
+    if (!object) return new Response("Not found", { status: 404, headers: CORS_HEADERS });
+    const headers = new Headers(CORS_HEADERS);
+    if (object.httpMetadata?.contentType) headers.set("content-type", object.httpMetadata.contentType);
+    if (object.size) headers.set("content-length", String(object.size));
+    return new Response(object.body, { status: 200, headers });
+    }
+
+    // CRITICAL FIX: Explicitly exclude /api/ and /r2/ paths from hitting your static asset engine
+    if (method === "GET" && !pathname.startsWith("/api") && !pathname.startsWith("/r2")) {
     return await serveStaticAsset(request, env, ctx);
     }
 
