@@ -1,5 +1,6 @@
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
+import { getAssetFromKV } from "@cloudflare/kv-asset-handler";
 
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
@@ -83,34 +84,43 @@ function getContentType(pathname) {
 }
 
 async function serveStaticAsset(request, env, ctx) {
-  const url = new URL(request.url);
-  let pathname = url.pathname;
-  const accept = request.headers.get("Accept") || "";
-  const isHtmlRequest = accept.includes("text/html");
-
-  if (!pathname.includes(".") && isHtmlRequest) {
-    pathname = "/index.html";
-  } else if (pathname.endsWith("/")) {
-    pathname += "index.html";
-  }
-
-  const assetKey = pathname.startsWith("/") ? pathname.slice(1) : pathname;
-  const asset = await env.__STATIC_CONTENT.get(assetKey, { type: "stream" });
-  if (!asset) {
-    if (isHtmlRequest) {
-      const fallback = await env.__STATIC_CONTENT.get("index.html", { type: "stream" });
-      if (fallback) {
+  try {
+    const asset = await getAssetFromKV(
+      { request, waitUntil: ctx.waitUntil },
+      {
+        mapRequestToAsset: (req) => {
+          const url = new URL(req.url);
+          let pathname = url.pathname;
+          if (pathname.endsWith("/")) pathname += "index.html";
+          if (!pathname.includes(".") || pathname === "/") {
+            return new Request(new URL("/index.html", req.url).toString(), req);
+          }
+          return req;
+        },
+      }
+    );
+    const headers = new Headers(CORS_HEADERS);
+    const contentType = getContentType(new URL(request.url).pathname);
+    if (contentType) headers.set("content-type", contentType);
+    return new Response(asset, { status: 200, headers });
+  } catch (err) {
+    if (request.method === "GET") {
+      try {
+        const indexAsset = await getAssetFromKV(
+          {
+            request: new Request(new URL("/index.html", request.url).toString(), request),
+            waitUntil: ctx.waitUntil,
+          }
+        );
         const headers = new Headers(CORS_HEADERS);
-        headers.set("content-type", getContentType("/index.html"));
-        return new Response(fallback, { status: 200, headers });
+        headers.set("content-type", "text/html; charset=utf-8");
+        return new Response(indexAsset, { status: 200, headers });
+      } catch (innerErr) {
+        return new Response("Not found", { status: 404, headers: CORS_HEADERS });
       }
     }
     return new Response("Not found", { status: 404, headers: CORS_HEADERS });
   }
-
-  const headers = new Headers(CORS_HEADERS);
-  headers.set("content-type", getContentType(pathname));
-  return new Response(asset, { status: 200, headers });
 }
 
 function getToken(request) {
