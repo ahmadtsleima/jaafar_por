@@ -1,7 +1,8 @@
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { getAssetFromKV } from "@cloudflare/kv-asset-handler";
-
+// 1. IMPORT THE WRANGLER ASSET MANIFEST AT THE TOP OF THE FILE
+import __STATIC_CONTENT_MANIFEST from "__STATIC_CONTENT_MANIFEST";
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET,POST,PATCH,DELETE,OPTIONS",
@@ -84,17 +85,26 @@ function getContentType(pathname) {
 }
 
 async function serveStaticAsset(request, env, ctx) {
+  const assetManifest = JSON.parse(__STATIC_CONTENT_MANIFEST);
+  
   try {
-    // Attempt to grab the exact asset (works for index.html, assets/index.js, etc.)
-    return await getAssetFromKV({ request, waitUntil: ctx.waitUntil });
+    // Pass the manifest map explicitly so it can match hashed asset file names
+    return await getAssetFromKV(
+      { request, waitUntil: ctx.waitUntil },
+      { ASSET_NAMESPACE: env.__STATIC_CONTENT, ASSET_MANIFEST: assetManifest }
+    );
   } catch (err) {
-    // If asset isn't found directly, rewrite request to serve index.html (SPA Fallback)
     if (request.method === "GET") {
       try {
+        // SPA Fallback: Rewrite request path to /index.html if route not found
         const url = new URL(request.url);
         url.pathname = "/index.html";
         const indexRequest = new Request(url.toString(), request);
-        return await getAssetFromKV({ request: indexRequest, waitUntil: ctx.waitUntil });
+        
+        return await getAssetFromKV(
+          { request: indexRequest, waitUntil: ctx.waitUntil },
+          { ASSET_NAMESPACE: env.__STATIC_CONTENT, ASSET_MANIFEST: assetManifest }
+        );
       } catch (innerErr) {
         return new Response("Index.html missing from KV store", { status: 404, headers: CORS_HEADERS });
       }
