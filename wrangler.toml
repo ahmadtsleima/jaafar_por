@@ -7,7 +7,7 @@ main = "workers/index.js"
 # Explicitly configure the site block with its entry-point
 [site]
 bucket = "./dist"
-entry-point = "workers"
+
 
 [observability.logs]
 enabled = false
