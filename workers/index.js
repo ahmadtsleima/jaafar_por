@@ -441,8 +441,9 @@ export default {
       return new Response(object.body, { status: 200, headers });
     }
 
-    if (method === "GET" && !pathname.startsWith("/api/")) {
-      return await serveStaticAsset(request, env, ctx);
+    // CHANGE THIS:
+    if (method === "GET" && !pathname.startsWith("/api/") && !pathname.startsWith("/r2/")) {
+    return await serveStaticAsset(request, env, ctx);
     }
 
     return jsonResponse({ error: "Not found" }, 404);
