@@ -85,36 +85,12 @@ function getContentType(pathname) {
 
 async function serveStaticAsset(request, env, ctx) {
   try {
-    const asset = await getAssetFromKV(
-      { request, waitUntil: ctx.waitUntil },
-      {
-        mapRequestToAsset: (req) => {
-          const url = new URL(req.url);
-          let pathname = url.pathname;
-          if (pathname.endsWith("/")) pathname += "index.html";
-          if (!pathname.includes(".") || pathname === "/") {
-            return new Request(new URL("/index.html", req.url).toString(), req);
-          }
-          return req;
-        },
-      }
-    );
-    const headers = new Headers(CORS_HEADERS);
-    const contentType = getContentType(new URL(request.url).pathname);
-    if (contentType) headers.set("content-type", contentType);
-    return new Response(asset, { status: 200, headers });
+    return await getAssetFromKV({ request, waitUntil: ctx.waitUntil });
   } catch (err) {
     if (request.method === "GET") {
       try {
-        const indexAsset = await getAssetFromKV(
-          {
-            request: new Request(new URL("/index.html", request.url).toString(), request),
-            waitUntil: ctx.waitUntil,
-          }
-        );
-        const headers = new Headers(CORS_HEADERS);
-        headers.set("content-type", "text/html; charset=utf-8");
-        return new Response(indexAsset, { status: 200, headers });
+        const indexRequest = new Request(new URL("/index.html", request.url).toString(), request);
+        return await getAssetFromKV({ request: indexRequest, waitUntil: ctx.waitUntil });
       } catch (innerErr) {
         return new Response("Not found", { status: 404, headers: CORS_HEADERS });
       }
