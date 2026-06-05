@@ -1,5 +1,3 @@
-# Wrangler config for Cloudflare Workers / R2
-# Fill in your account_id and bucket names before publishing.
 name = "jaafarportof"
 type = "javascript"
 compatibility_date = "2026-06-04"
@@ -7,7 +5,7 @@ compatibility_flags = ["nodejs_compat"]
 account_id = "b9a37bd4d9ab04f8f3686130e5f764a6"
 main = "workers/index.js"
 site = { bucket = "./dist" }
-routes = ["jaafarsleiman.com/*"]
+routes = ["jaafarsleiman.com/*", "www.jaafarsleiman.com/*"]
 
 [observability.logs]
 enabled = false
@@ -16,14 +14,14 @@ invocation_logs = true
 [observability]
 enabled = false
 
-# Global vars available to all environments (override per env below)
+# Global vars - these will now act as your production variables
 [vars]
 JWT_SECRET = "28829ecf49bf1b1efea62cd0db161eab5ac1d42e30a005a74b1d9df28022eb277340c3d07cc2f310bdacd05aa2c1116f"
 ADMIN_PASSWORD = "AVFXBnMZF(FKS>M@"
 ADMIN_PASSWORD_HASH = ""
-FRONTEND_URL = "https://jaafarsleiman.com"
+FRONTEND_URL = "https://jaafarsleiman.com" # <--- Fixed to your real domain
 
-# Bind D1 and R2 to the Worker (replace placeholders with real IDs/names).
+# Global bindings for production
 [[d1_databases]]
 binding = "DB"
 database_id = "27af65af-c2c0-4dc3-8f71-5fb35c922e59"
@@ -33,7 +31,7 @@ binding = "R2_BUCKET"
 bucket_name = "jaafar-web1"
 preview_bucket_name = "jaafar-web1-preview"
 
-# Development environment (used with `wrangler dev` and `--env dev`)
+# Keep your development environment separate
 [env.dev]
 account_id = "b9a37bd4d9ab04f8f3686130e5f764a6"
 [env.dev.vars]
@@ -45,25 +43,3 @@ ADMIN_PASSWORD_HASH = ""
 binding = "R2_BUCKET"
 bucket_name = "jaafar-web1-dev"
 preview_bucket_name = "jaafar-web1-dev-preview"
-
-# Production environment
-[env.production]
-account_id = "b9a37bd4d9ab04f8f3686130e5f764a6"
-routes = ["jaafarsleiman.com/*", "www.jaafarsleiman.com/*"]
-[env.production.vars]
-FRONTEND_URL = "https://jaafarsleiman.com"
-JWT_SECRET = "28829ecf49bf1b1efea62cd0db161eab5ac1d42e30a005a74b1d9df28022eb277340c3d07cc2f310bdacd05aa2c1116f"
-ADMIN_PASSWORD = "AVFXBnMZF(FKS>M@"
-ADMIN_PASSWORD_HASH = ""
-[[env.production.r2_buckets]]
-binding = "R2_BUCKET"
-bucket_name = "jaafar-web1"
-preview_bucket_name = "jaafar-web1-preview"
-
-# Add D1 binding for production and dev (Wrangler expects env-level bindings)
-[[env.production.d1_databases]]
-binding = "DB"
-database_id = "27af65af-c2c0-4dc3-8f71-5fb35c922e59"
-
-# Optional: add routes if deploying to a specific domain
-# routes = ["api.yourdomain.com/*"]
