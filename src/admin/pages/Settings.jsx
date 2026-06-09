@@ -7,14 +7,30 @@ export default function Settings() {
   };
 
   return (
-    <div>
-      <section className="adm-section">
-        <h2 className="adm-section-title">Image Slot Specifications</h2>
-        <p className="adm-settings-note">
-          Share these dimensions with your photographer before each shoot.
+    <div className="adm-settings-page">
+
+      {/* ── Hero ── */}
+      <div className="adm-settings-hero">
+        <p className="adm-settings-kicker">Configuration</p>
+        <h1 className="adm-settings-title">Settings</h1>
+        <p className="adm-settings-subtitle">
+          Slot specs, export guidelines, and session controls for the admin workspace.
         </p>
-        <div className="adm-slots-table-wrap">
-          <table className="adm-slots-table">
+      </div>
+
+      {/* ── Image specs ── */}
+      <div className="adm-settings-card">
+        <div className="adm-settings-card-head">
+          <div className="adm-settings-card-icon">⊞</div>
+          <div>
+            <h2 className="adm-settings-card-title">Image Slot Specifications</h2>
+            <p className="adm-settings-card-note">
+              Share these dimensions with your photographer before each shoot.
+            </p>
+          </div>
+        </div>
+        <div className="adm-settings-table-wrap">
+          <table className="adm-settings-table">
             <thead>
               <tr>
                 <th>Slot</th>
@@ -27,23 +43,29 @@ export default function Settings() {
               {SLOT_ROWS.map((row) => (
                 <tr key={row.slot}>
                   <td><code>{row.slot}</code></td>
-                  <td>{row.size}</td>
-                  <td>{row.ratio}</td>
-                  <td>{row.notes}</td>
+                  <td className="adm-settings-td-mono">{row.size}</td>
+                  <td><span className="adm-settings-badge">{row.ratio}</span></td>
+                  <td className="adm-settings-td-muted">{row.notes}</td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
-      </section>
+      </div>
 
-      <section className="adm-section">
-        <h2 className="adm-section-title">Video Slot Specifications</h2>
-        <p className="adm-settings-note">
-          Recommended export settings for each video slot. Keep files under the size limit for fast uploads.
-        </p>
-        <div className="adm-slots-table-wrap">
-          <table className="adm-slots-table">
+      {/* ── Video specs ── */}
+      <div className="adm-settings-card">
+        <div className="adm-settings-card-head">
+          <div className="adm-settings-card-icon">▶</div>
+          <div>
+            <h2 className="adm-settings-card-title">Video Slot Specifications</h2>
+            <p className="adm-settings-card-note">
+              Recommended export settings per slot. Stay under the size limit for fast uploads.
+            </p>
+          </div>
+        </div>
+        <div className="adm-settings-table-wrap">
+          <table className="adm-settings-table">
             <thead>
               <tr>
                 <th>Slot</th>
@@ -58,34 +80,46 @@ export default function Settings() {
               {VIDEO_SLOT_ROWS.map((row) => (
                 <tr key={row.slot}>
                   <td><code>{row.slot}</code></td>
-                  <td>{row.resolution}</td>
+                  <td className="adm-settings-td-mono">{row.resolution}</td>
                   <td>{row.format}</td>
-                  <td><strong>{row.maxSize}</strong></td>
-                  <td>{row.fps}</td>
-                  <td>{row.notes}</td>
+                  <td><span className="adm-settings-size-pill">{row.maxSize}</span></td>
+                  <td className="adm-settings-td-mono">{row.fps}</td>
+                  <td className="adm-settings-td-muted">{row.notes}</td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
-      </section>
+      </div>
 
-      <section className="adm-section">
-        <h2 className="adm-section-title">Session</h2>
-        <button className="adm-btn adm-btn-danger" onClick={handleLogout}>
-          Sign out
-        </button>
-      </section>
+      {/* ── Session ── */}
+      <div className="adm-settings-card adm-settings-card-session">
+        <div className="adm-settings-card-head">
+          <div className="adm-settings-card-icon adm-settings-card-icon-danger">⏻</div>
+          <div>
+            <h2 className="adm-settings-card-title">Session</h2>
+            <p className="adm-settings-card-note">
+              Sign out and clear the stored authentication token from this browser.
+            </p>
+          </div>
+        </div>
+        <div className="adm-settings-session-actions">
+          <button className="adm-settings-logout-btn" onClick={handleLogout}>
+            Sign out
+          </button>
+        </div>
+      </div>
+
     </div>
   );
 }
 
 const VIDEO_SLOT_ROWS = [
-  { slot: "scroll_scrub",      resolution: "1920 × 1080", format: "MP4 (H.264)", maxSize: "150 MB", fps: "24–30", notes: "Stop-motion frame sequence. Smooth scrub needs high frame count." },
-  { slot: "motion_brands",     resolution: "1920 × 1080", format: "MP4 (H.264)", maxSize: "200 MB", fps: "24–60", notes: "Brand project reels. Multiple videos allowed per slot." },
-  { slot: "motion_filmmaking", resolution: "1920 × 1080", format: "MP4 (H.264)", maxSize: "200 MB", fps: "24–60", notes: "Filmmaking reels. Compress to H.264 before uploading." },
-  { slot: "motion_commercial", resolution: "1920 × 1080", format: "MP4 (H.264)", maxSize: "200 MB", fps: "24–60", notes: "Commercial reels. Aim for < 100 MB for faster load." },
-  { slot: "motion_fashion",    resolution: "1920 × 1080", format: "MP4 (H.264)", maxSize: "200 MB", fps: "24–60", notes: "Fashion reels. Vertical (9:16) also accepted." },
+  { slot: "scroll_scrub",      resolution: "1920 × 1080", format: "MP4 (H.264)",        maxSize: "150 MB", fps: "24–30", notes: "Stop-motion frame sequence. Smooth scrub needs high frame count." },
+  { slot: "motion_brands",     resolution: "1920 × 1080", format: "MP4 (H.264)",        maxSize: "200 MB", fps: "24–60", notes: "Brand project reels. Multiple videos allowed per slot." },
+  { slot: "motion_filmmaking", resolution: "1920 × 1080", format: "MP4 (H.264)",        maxSize: "200 MB", fps: "24–60", notes: "Filmmaking reels. Compress to H.264 before uploading." },
+  { slot: "motion_commercial", resolution: "1920 × 1080", format: "MP4 (H.264)",        maxSize: "200 MB", fps: "24–60", notes: "Commercial reels. Aim for < 100 MB for faster load." },
+  { slot: "motion_fashion",    resolution: "1920 × 1080", format: "MP4 (H.264)",        maxSize: "200 MB", fps: "24–60", notes: "Fashion reels. Vertical (9:16) also accepted." },
   { slot: "services_reel",     resolution: "1920 × 1080", format: "MP4 (H.264) / WebM", maxSize: "80 MB",  fps: "24–30", notes: "Ambient looping background. Keep short (10–30 s) and muted." },
 ];
 

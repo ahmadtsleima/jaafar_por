@@ -732,25 +732,237 @@
   font-size: 12px;
 }
 
-/* ─── Settings table ──────────────────────────────────────────── */
+/* ─── Settings page ───────────────────────────────────────────── */
 
-.adm-settings-note { font-size: 13px; color: #888; margin: 0 0 16px; }
+.adm-settings-page {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
 
-.adm-slots-table-wrap { overflow-x: auto; }
+/* Hero */
+.adm-settings-hero {
+  padding: 32px 32px 28px;
+  background:
+    radial-gradient(ellipse at 90% 0%, rgba(201,169,110,0.18) 0%, transparent 55%),
+    linear-gradient(160deg, #0c1828 0%, #0a1420 100%);
+  border: 1px solid rgba(201,169,110,0.12);
+  border-radius: 18px;
+}
 
-.adm-slots-table {
+.adm-settings-kicker {
+  margin: 0 0 8px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--adm-accent);
+}
+
+.adm-settings-title {
+  margin: 0 0 10px;
+  font-size: clamp(32px, 5vw, 52px);
+  font-weight: 800;
+  letter-spacing: -0.05em;
+  line-height: 0.95;
+  color: #fff;
+}
+
+.adm-settings-subtitle {
+  margin: 0;
+  max-width: 560px;
+  font-size: 14px;
+  line-height: 1.65;
+  color: rgba(255,255,255,0.55);
+}
+
+/* Cards */
+.adm-settings-card {
+  background: var(--adm-surface);
+  border: 1px solid rgba(255,255,255,0.05);
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.35);
+}
+
+.adm-settings-card-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 22px 24px 18px;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+  background: linear-gradient(180deg, rgba(255,255,255,0.03) 0%, transparent 100%);
+}
+
+.adm-settings-card-icon {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  border-radius: 10px;
+  background: rgba(201,169,110,0.12);
+  border: 1px solid rgba(201,169,110,0.2);
+  color: var(--adm-accent);
+  font-size: 17px;
+}
+
+.adm-settings-card-icon-danger {
+  background: rgba(224,90,90,0.1);
+  border-color: rgba(224,90,90,0.2);
+  color: #e05a5a;
+}
+
+.adm-settings-card-title {
+  margin: 0 0 4px;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--adm-text);
+}
+
+.adm-settings-card-note {
+  margin: 0;
+  font-size: 13px;
+  color: var(--adm-muted);
+  line-height: 1.5;
+}
+
+/* Table */
+.adm-settings-table-wrap {
+  overflow-x: auto;
+  padding: 0 4px 4px;
+}
+
+.adm-settings-table {
   width: 100%;
   border-collapse: collapse;
   font-size: 13px;
+  color: var(--adm-text);
 }
-.adm-slots-table th,
-.adm-slots-table td {
-  padding: 10px 14px;
+
+.adm-settings-table thead tr {
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+
+.adm-settings-table th {
+  padding: 13px 16px;
   text-align: left;
-  border-bottom: 1px solid #f0f0ee;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--adm-muted);
+  white-space: nowrap;
 }
-.adm-slots-table th { color: #888; font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; }
-.adm-slots-table code { font-size: 12px; background: #f5f5f3; padding: 2px 6px; border-radius: 3px; }
+
+.adm-settings-table tbody tr {
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+  transition: background 120ms ease;
+}
+
+.adm-settings-table tbody tr:last-child {
+  border-bottom: none;
+}
+
+.adm-settings-table tbody tr:hover {
+  background: rgba(201,169,110,0.04);
+}
+
+.adm-settings-table td {
+  padding: 12px 16px;
+  vertical-align: middle;
+  color: rgba(233,238,243,0.85);
+  line-height: 1.45;
+}
+
+.adm-settings-table code {
+  font-family: "SF Mono", "Fira Code", Consolas, monospace;
+  font-size: 12px;
+  padding: 3px 8px;
+  border-radius: 5px;
+  background: rgba(201,169,110,0.1);
+  border: 1px solid rgba(201,169,110,0.18);
+  color: var(--adm-accent);
+  white-space: nowrap;
+}
+
+.adm-settings-td-mono {
+  font-family: "SF Mono", "Fira Code", Consolas, monospace;
+  font-size: 12px;
+  color: var(--adm-muted);
+  white-space: nowrap;
+}
+
+.adm-settings-td-muted {
+  color: var(--adm-muted);
+  font-size: 12px;
+  max-width: 340px;
+}
+
+.adm-settings-badge {
+  display: inline-block;
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.09);
+  color: rgba(233,238,243,0.7);
+  white-space: nowrap;
+}
+
+.adm-settings-size-pill {
+  display: inline-block;
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 800;
+  background: rgba(201,169,110,0.12);
+  border: 1px solid rgba(201,169,110,0.22);
+  color: var(--adm-accent);
+  white-space: nowrap;
+}
+
+/* Session */
+.adm-settings-session-actions {
+  padding: 20px 24px;
+}
+
+.adm-settings-logout-btn {
+  padding: 10px 24px;
+  border: 1px solid rgba(224,90,90,0.45);
+  border-radius: 8px;
+  background: rgba(224,90,90,0.07);
+  color: #e05a5a;
+  font: 600 13px/1 Inter, sans-serif;
+  cursor: pointer;
+  letter-spacing: 0.02em;
+  transition: background 150ms, border-color 150ms, color 150ms;
+}
+
+.adm-settings-logout-btn:hover {
+  background: #e05a5a;
+  border-color: #e05a5a;
+  color: #fff;
+}
+
+/* Legacy .adm-section (used by Dashboard) — keep white */
+.adm-section {
+  background: #fff;
+  border: 1px solid #e8e8e6;
+  border-radius: 8px;
+  padding: 24px;
+  margin-bottom: 24px;
+}
+
+.adm-section-title {
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  margin: 0 0 16px;
+}
 
 /* ─── Utilities ───────────────────────────────────────────────── */
 
