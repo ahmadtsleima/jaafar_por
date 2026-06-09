@@ -588,21 +588,31 @@ function ReelShowcase() {
 
   return (
     <section className="reel-section reveal-block" id="reels" aria-labelledby="reels-title">
-      {/* ── Header row ── */}
-      <div className="reel-header">
-        <div className="reel-header-left">
-          <span className="reel-section-num" aria-hidden="true">03</span>
-          <div>
-            <p className="eyebrow">Featured Work</p>
-            <h2 className="reel-title" id="reels-title">Selected Reels</h2>
-          </div>
-        </div>
-        <div className="reel-header-right">
+      {/* ── Bordered card wrapper — same pattern as Selected Frames & Video Projects ── */}
+      <div className="reel-card-wrap">
+
+        {/* ── Centered section header ── */}
+        <header className="reel-sec-header">
+          <p className="eyebrow">Featured Work</p>
+          <h2 id="reels-title">Selected Reels</h2>
+          <p className="reel-sec-desc">
+            A curated showcase of motion work — brand films, fashion edits, and
+            commercial reels. Click any reel to watch in full.
+          </p>
+        </header>
+
+        {/* ── Controls row: counter + arrows ── */}
+        <div className="reel-controls">
           <span className="reel-counter" aria-label={`${activeIdx + 1} of ${total}`}>
             <strong>{String(activeIdx + 1).padStart(2, "0")}</strong>
-            <span>/</span>
+            <span className="reel-counter-sep">/</span>
             <span>{String(total).padStart(2, "0")}</span>
           </span>
+
+          {active.title && (
+            <span className="reel-active-title">{active.title}</span>
+          )}
+
           <div className="reel-nav-btns" role="group" aria-label="Reel navigation">
             <button className="reel-nav-btn" type="button" onClick={() => go(-1)} aria-label="Previous reel">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M15 18l-6-6 6-6"/></svg>
@@ -612,13 +622,11 @@ function ReelShowcase() {
             </button>
           </div>
         </div>
-      </div>
 
-      {/* ── Featured player ── */}
-      <div className="reel-featured-wrap">
-        <div className={`reel-featured${transitioning ? " is-transitioning" : ""}`}>
-          {/* Media */}
-          <div className="reel-featured-media">
+        {/* ── Featured video ── */}
+        <div className="reel-stage-wrap">
+          <div className={`reel-stage${transitioning ? " is-transitioning" : ""}`}>
+            {/* video / iframe */}
             {isVimeoUrl(active.url) ? (
               <iframe
                 key={active.id || activeIdx}
@@ -634,84 +642,100 @@ function ReelShowcase() {
                 muted playsInline loop autoPlay preload="metadata"
               />
             )}
-            {/* gradient overlay */}
-            <div className="reel-featured-gradient" aria-hidden="true" />
-          </div>
 
-          {/* Overlay info */}
-          <div className="reel-featured-info" aria-hidden="true">
-            <span className="reel-featured-num">{String(activeIdx + 1).padStart(2, "0")}</span>
-            {active.title && <p className="reel-featured-title">{active.title}</p>}
-          </div>
+            {/* bottom gradient so text is legible */}
+            <div className="reel-stage-gradient" aria-hidden="true" />
 
-          {/* Play button */}
-          <button
-            className="reel-featured-play"
-            type="button"
-            onClick={() => setPopup(true)}
-            aria-label={`Play ${active.title || "reel"} in fullscreen`}
-          >
-            <span className="reel-play-ring" aria-hidden="true">
-              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
-            </span>
-            <span className="reel-play-label">Play</span>
-          </button>
+            {/* bottom-left: index + title */}
+            <div className="reel-stage-meta">
+              <span className="reel-stage-idx" aria-hidden="true">
+                {String(activeIdx + 1).padStart(2, "0")}
+              </span>
+              {active.title && <p className="reel-stage-name">{active.title}</p>}
+            </div>
 
-          {/* Swipe / drag hint */}
-          <div className="reel-drag-hint" aria-hidden="true">
-            <span>← drag →</span>
-          </div>
-        </div>
-
-        {/* Progress bar */}
-        <div className="reel-progress" aria-hidden="true">
-          {reels.map((_, i) => (
+            {/* centre play button — appears on hover */}
             <button
-              key={i}
+              className="reel-play-btn"
               type="button"
-              className={`reel-progress-dot${i === activeIdx ? " is-active" : ""}`}
-              onClick={() => { if (!transitioning) { setTransitioning(true); setTimeout(() => { setActiveIdx(i); setTransitioning(false); }, 220); } }}
-              aria-label={`Go to reel ${i + 1}`}
-            />
-          ))}
-        </div>
-      </div>
-
-      {/* ── Thumbnail rail ── */}
-      {total > 1 && (
-        <div className="reel-thumbs-wrap">
-          <div className="reel-thumbs" ref={thumbsRef} role="list">
-            {reels.map((reel, i) => (
-              <button
-                key={reel.id || i}
-                type="button"
-                className={`reel-thumb${i === activeIdx ? " is-active" : ""}`}
-                onClick={() => { if (!transitioning && i !== activeIdx) { setTransitioning(true); setTimeout(() => { setActiveIdx(i); setTransitioning(false); }, 220); } }}
-                role="listitem"
-                aria-label={reel.title || `Reel ${i + 1}`}
-                aria-current={i === activeIdx ? "true" : undefined}
-              >
-                <div className="reel-thumb-media">
-                  {isVimeoUrl(reel.url) ? (
-                    <iframe
-                      src={`https://player.vimeo.com/video/${reel.url.match(/\/(\d+)/)?.[1]}?background=1&muted=1`}
-                      allow="autoplay"
-                      title=""
-                      loading="lazy"
-                      tabIndex={-1}
-                    />
-                  ) : (
-                    <video src={reel.url} muted playsInline preload="metadata" tabIndex={-1} />
-                  )}
-                  <div className="reel-thumb-overlay" aria-hidden="true" />
-                </div>
-                <span className="reel-thumb-num">{String(i + 1).padStart(2, "0")}</span>
-                {reel.title && <span className="reel-thumb-title">{reel.title}</span>}
-              </button>
-            ))}
+              onClick={() => setPopup(true)}
+              aria-label={`Play ${active.title || "reel"} in fullscreen`}
+            >
+              <span className="reel-play-circle">
+                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+              </span>
+              <span className="reel-play-text">Watch Full Reel</span>
+            </button>
           </div>
+
+          {/* progress dots */}
+          {total > 1 && (
+            <div className="reel-dots" role="group" aria-label="Reel selector">
+              {reels.map((_, i) => (
+                <button
+                  key={i}
+                  type="button"
+                  className={`reel-dot${i === activeIdx ? " is-active" : ""}`}
+                  onClick={() => {
+                    if (!transitioning) {
+                      setTransitioning(true);
+                      setTimeout(() => { setActiveIdx(i); setTransitioning(false); }, 220);
+                    }
+                  }}
+                  aria-label={`Go to reel ${i + 1}`}
+                  aria-current={i === activeIdx ? "true" : undefined}
+                />
+              ))}
+            </div>
+          )}
         </div>
-      )}
+
+        {/* ── Thumbnail strip ── */}
+        {total > 1 && (
+          <div className="reel-strip-wrap">
+            <div className="reel-strip" ref={thumbsRef}>
+              {reels.map((reel, i) => (
+                <button
+                  key={reel.id || i}
+                  type="button"
+                  className={`reel-strip-item${i === activeIdx ? " is-active" : ""}`}
+                  onClick={() => {
+                    if (!transitioning && i !== activeIdx) {
+                      setTransitioning(true);
+                      setTimeout(() => { setActiveIdx(i); setTransitioning(false); }, 220);
+                    }
+                  }}
+                  aria-label={reel.title || `Reel ${i + 1}`}
+                  aria-current={i === activeIdx ? "true" : undefined}
+                >
+                  <div className="reel-strip-media">
+                    {isVimeoUrl(reel.url) ? (
+                      <iframe
+                        src={`https://player.vimeo.com/video/${reel.url.match(/\/(\d+)/)?.[1]}?background=1&muted=1`}
+                        allow="autoplay"
+                        title=""
+                        loading="lazy"
+                        tabIndex={-1}
+                      />
+                    ) : (
+                      <video src={reel.url} muted playsInline preload="metadata" tabIndex={-1} />
+                    )}
+                    <div className="reel-strip-overlay" aria-hidden="true" />
+                    {i === activeIdx && (
+                      <div className="reel-strip-playing" aria-hidden="true">
+                        <span /><span /><span />
+                      </div>
+                    )}
+                  </div>
+                  <span className="reel-strip-num">{String(i + 1).padStart(2, "0")}</span>
+                  {reel.title && <span className="reel-strip-label">{reel.title}</span>}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+      </div>{/* end .reel-card-wrap */}
 
       {/* ── Fullscreen popup ── */}
       {popup && createPortal(
