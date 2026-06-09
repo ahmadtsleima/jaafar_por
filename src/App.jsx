@@ -4,6 +4,30 @@ import { createPortal } from "react-dom";
 
 const videoFilters = ["Brands", "Filmmaking", "Commercial", "Fashion"];
 
+/** Returns true when the URL is a Vimeo embed URL */
+const isVimeoUrl = (src) => typeof src === "string" && src.includes("player.vimeo.com");
+
+/**
+ * Build a Vimeo embed URL with the right params.
+ * background=1  → auto-plays muted, no controls (for carousel preview)
+ * autoplay=1    → full player with controls (for popup)
+ */
+function vimeoSrc(baseUrl, { background = false } = {}) {
+  const url = new URL(baseUrl);
+  if (background) {
+    url.searchParams.set("background", "1");
+    url.searchParams.set("autoplay", "1");
+    url.searchParams.set("muted", "1");
+    url.searchParams.set("loop", "1");
+  } else {
+    url.searchParams.set("autoplay", "1");
+    url.searchParams.set("title", "0");
+    url.searchParams.set("byline", "0");
+    url.searchParams.set("portrait", "0");
+  }
+  return url.toString();
+}
+
 const mapRange = (value, inMin, inMax, outMin, outMax) => {
   if (value <= inMin) return outMin;
   if (value >= inMax) return outMax;
@@ -988,6 +1012,7 @@ function VideoProjects() {
 
   useEffect(() => {
     const frame = window.requestAnimationFrame(() => {
+      // Only control <video> elements — Vimeo iframes manage themselves via background=1
       const videos = Array.from(carouselRef.current?.querySelectorAll("video") || []);
 
       videos.forEach((video) => {
@@ -1004,17 +1029,11 @@ function VideoProjects() {
         }
 
         video.pause();
-        try {
-          video.currentTime = 0;
-        } catch {
-          // Some browsers reject currentTime updates before metadata is ready.
-        }
+        try { video.currentTime = 0; } catch { /* metadata not ready */ }
       });
     });
 
-    return () => {
-      window.cancelAnimationFrame(frame);
-    };
+    return () => { window.cancelAnimationFrame(frame); };
   }, [previewVideoKey, popupVideo]);
 
   const handleCategoryChange = (category) => {
@@ -1065,7 +1084,16 @@ function VideoProjects() {
           ×
         </button>
         <div className="video-popup-media">
-          <video src={popupVideo.src} poster={popupVideo.poster} controls autoPlay playsInline />
+          {isVimeoUrl(popupVideo.src) ? (
+            <iframe
+              src={vimeoSrc(popupVideo.src)}
+              allow="autoplay; fullscreen; picture-in-picture"
+              allowFullScreen
+              title={popupVideo.title}
+            />
+          ) : (
+            <video src={popupVideo.src} poster={popupVideo.poster} controls autoPlay playsInline />
+          )}
         </div>
         <div className="video-popup-caption">
           <span>{popupVideo.category}</span>
@@ -1126,7 +1154,15 @@ function VideoProjects() {
                     tabIndex={0}
                   >
                     <div className="motion-video-media">
-                      {slotIndex === 1 ? (
+                      {isVimeoUrl(item.src) ? (
+                        <iframe
+                          src={vimeoSrc(item.src, { background: true })}
+                          allow="autoplay; fullscreen; picture-in-picture"
+                          allowFullScreen
+                          title={item.title}
+                          loading="lazy"
+                        />
+                      ) : slotIndex === 1 ? (
                         <video src={item.src} poster={item.poster} muted playsInline loop autoPlay preload="metadata" />
                       ) : item.poster ? (
                         <img src={item.poster} alt="" loading="lazy" />

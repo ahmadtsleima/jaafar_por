@@ -7,6 +7,14 @@ const VALIDATION_LABELS = {
   resolution: "Resolution",
 };
 
+/** Extract a numeric Vimeo video ID from any Vimeo URL format */
+function extractVimeoId(input) {
+  const match = input.match(
+    /(?:vimeo\.com\/(?:video\/|channels\/[^/]+\/)?|player\.vimeo\.com\/video\/)(\d+)/
+  );
+  return match ? match[1] : null;
+}
+
 const formatDate = (value) => {
   if (!value) return "Not available";
   const date = new Date(value);
@@ -23,8 +31,14 @@ export default function VideoManager({ slot, label, notes }) {
   const [validations, setValidations] = useState(null);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  // "file" | "vimeo"
+  const [uploadTab, setUploadTab] = useState("vimeo");
+  const [vimeoInput, setVimeoInput] = useState("");
+  const [vimeoId, setVimeoId] = useState(null);
   const inputRef = useRef(null);
   const isMotionSlot = slot.startsWith("motion_");
+  // scroll_scrub needs direct <video> frame control — Vimeo iframe can't do that
+  const vimeoAllowed = slot !== "scroll_scrub";
   const liveCount = videos.filter((video) => video.published).length;
   const stagedCount = videos.length - liveCount;
 
@@ -46,11 +60,10 @@ export default function VideoManager({ slot, label, notes }) {
       return;
     }
 
-    // Check file sizes and warn if large
     const totalSize = files.reduce((sum, f) => sum + f.size, 0);
     const totalMB = (totalSize / (1024 * 1024)).toFixed(1);
     if (totalMB > 200) {
-      setError(`Total size (${totalMB} MB) exceeds recommended limit. Videos may take 2-5+ minutes to upload. Try splitting into smaller files.`);
+      setError(`Total size (${totalMB} MB) exceeds recommended limit. Try splitting into smaller files.`);
       return;
     }
 
@@ -58,7 +71,7 @@ export default function VideoManager({ slot, label, notes }) {
     setUploadProgress(0);
     setValidations(null);
     setError("");
-    setMessage(`Uploading ${totalMB} MB...`);
+    setMessage(`Uploading ${totalMB} MB…`);
 
     try {
       const fd = new FormData();
@@ -70,12 +83,31 @@ export default function VideoManager({ slot, label, notes }) {
       setValidations(result.validations);
       setMessage(`✓ ${files.length} video${files.length === 1 ? "" : "s"} uploaded${isMotionSlot ? " and published" : " as staged"}.`);
       fetchVideos();
-      
-      setTimeout(() => {
-        setUploadProgress(0);
-      }, 1000);
+      setTimeout(() => setUploadProgress(0), 1000);
     } catch (err) {
-      setError(`Upload failed: ${err.message}. For large videos (>100 MB), try uploading one at a time.`);
+      setError(`Upload failed: ${err.message}. For large videos (>100 MB), try one at a time.`);
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const addVimeo = async () => {
+    const id = vimeoId;
+    if (!id) { setError("Paste a valid Vimeo URL first."); return; }
+    setUploading(true);
+    setError("");
+    setMessage("");
+    try {
+      const fd = new FormData();
+      fd.append("vimeo_id", id);
+      fd.append("slot", slot);
+      await api.videos.upload(fd, () => {});
+      setMessage(`✓ Vimeo video added${isMotionSlot ? " and published" : " as staged"}.`);
+      setVimeoInput("");
+      setVimeoId(null);
+      fetchVideos();
+    } catch (err) {
+      setError(`Failed: ${err.message}`);
     } finally {
       setUploading(false);
     }
@@ -104,45 +136,99 @@ export default function VideoManager({ slot, label, notes }) {
 
       <div className="adm-panel-card">
         <div className="adm-video-workspace">
-          <div
-          className={`adm-video-upload${dragOver ? " is-dragging" : ""}${uploading ? " is-uploading" : ""}`}
-          onClick={() => inputRef.current?.click()}
-          onDragOver={(event) => { event.preventDefault(); setDragOver(true); }}
-          onDragLeave={() => setDragOver(false)}
-          onDrop={(event) => { event.preventDefault(); setDragOver(false); upload(event.dataTransfer.files); }}
-          onKeyDown={(event) => {
-            if (event.key === "Enter" || event.key === " ") {
-              event.preventDefault();
-              inputRef.current?.click();
-            }
-          }}
-          role="button"
-          tabIndex={0}
-        >
-          <span className="adm-video-upload-icon">{uploading ? "⦘" : "+"}</span>
-          <strong>{uploading ? `Uploading ${Math.round(uploadProgress)}%` : "Add video"}</strong>
-          <p>{isMotionSlot ? "Drop multiple project videos here." : "Drop the replacement video here."}</p>
-          <small>{isMotionSlot ? "Auto-publishes to the landing carousel." : "Upload stays staged until you publish it."}</small>
-          {uploading && (
-            <div className="adm-video-progress-container">
-              <div className="adm-video-progress-bar">
-                <div
-                  className="adm-video-progress-fill"
-                  style={{ width: `${Math.round(uploadProgress)}%` }}
+          <div className="adm-video-upload-panel">
+
+            {/* Tab bar — hide Vimeo tab for scroll_scrub */}
+            {vimeoAllowed && (
+              <div className="adm-video-tabs">
+                <button
+                  type="button"
+                  className={`adm-video-tab${uploadTab === "vimeo" ? " is-active" : ""}`}
+                  onClick={() => { setUploadTab("vimeo"); setError(""); setMessage(""); }}
+                >
+                  <span>🎬</span> Vimeo URL
+                </button>
+                <button
+                  type="button"
+                  className={`adm-video-tab${uploadTab === "file" ? " is-active" : ""}`}
+                  onClick={() => { setUploadTab("file"); setError(""); setMessage(""); }}
+                >
+                  <span>⬆</span> Upload File
+                </button>
+              </div>
+            )}
+
+            {/* ── Vimeo tab ── */}
+            {uploadTab === "vimeo" && vimeoAllowed ? (
+              <div className="adm-vimeo-tab">
+                <p className="adm-vimeo-hint">
+                  Paste any Vimeo link — the video streams from Vimeo's CDN, zero storage cost.
+                </p>
+                <input
+                  className="adm-vimeo-input"
+                  type="url"
+                  placeholder="https://vimeo.com/123456789"
+                  value={vimeoInput}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setVimeoInput(val);
+                    setVimeoId(extractVimeoId(val));
+                  }}
+                />
+                {vimeoId && (
+                  <div className="adm-vimeo-preview">
+                    <iframe
+                      src={`https://player.vimeo.com/video/${vimeoId}?autoplay=0&title=0&byline=0&portrait=0`}
+                      allow="autoplay; fullscreen; picture-in-picture"
+                      allowFullScreen
+                      title="Vimeo preview"
+                    />
+                    <p className="adm-vimeo-preview-label">ID: {vimeoId} — looks good?</p>
+                  </div>
+                )}
+                <button
+                  className="adm-btn adm-btn-primary adm-vimeo-submit"
+                  type="button"
+                  disabled={!vimeoId || uploading}
+                  onClick={addVimeo}
+                >
+                  {uploading ? "Saving…" : "Add Vimeo video →"}
+                </button>
+              </div>
+            ) : (
+              /* ── File upload tab ── */
+              <div
+                className={`adm-video-upload${dragOver ? " is-dragging" : ""}${uploading ? " is-uploading" : ""}`}
+                onClick={() => inputRef.current?.click()}
+                onDragOver={(event) => { event.preventDefault(); setDragOver(true); }}
+                onDragLeave={() => setDragOver(false)}
+                onDrop={(event) => { event.preventDefault(); setDragOver(false); upload(event.dataTransfer.files); }}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter" || event.key === " ") { event.preventDefault(); inputRef.current?.click(); }
+                }}
+                role="button"
+                tabIndex={0}
+              >
+                <span className="adm-video-upload-icon">{uploading ? "⦘" : "+"}</span>
+                <strong>{uploading ? `Uploading ${Math.round(uploadProgress)}%` : "Add video"}</strong>
+                <p>{isMotionSlot ? "Drop multiple project videos here." : "Drop the replacement video here."}</p>
+                <small>{isMotionSlot ? "Auto-publishes to the landing carousel." : "Upload stays staged until you publish it."}</small>
+                {uploading && (
+                  <div className="adm-video-progress-container">
+                    <div className="adm-video-progress-bar">
+                      <div className="adm-video-progress-fill" style={{ width: `${Math.round(uploadProgress)}%` }} />
+                    </div>
+                  </div>
+                )}
+                <input
+                  ref={inputRef}
+                  type="file"
+                  multiple={isMotionSlot}
+                  accept="video/mp4,video/webm"
+                  onChange={(event) => { upload(event.target.files); event.target.value = ""; }}
                 />
               </div>
-            </div>
-          )}
-          <input
-            ref={inputRef}
-            type="file"
-            multiple={isMotionSlot}
-            accept="video/mp4,video/webm"
-            onChange={(event) => {
-              upload(event.target.files);
-              event.target.value = "";
-            }}
-          />
+            )}
           </div>
 
           <div className="adm-video-library">
@@ -198,24 +284,36 @@ export default function VideoManager({ slot, label, notes }) {
 }
 
 function VideoCard({ video, isMotionSlot, onPublish, onRemove }) {
+  const isVimeo = typeof video.url === "string" && video.url.includes("player.vimeo.com");
   const dimensions = video.resolution_width && video.resolution_height
     ? `${video.resolution_width}x${video.resolution_height}`
-    : "Auto";
+    : isVimeo ? "Vimeo CDN" : "Auto";
 
   return (
     <article className="adm-video-card">
       <div className="adm-video-preview">
-        <video
-          className="adm-video-card-player"
-          src={video.url}
-          controls
-          muted
-          playsInline
-          preload="metadata"
-        />
+        {isVimeo ? (
+          <iframe
+            className="adm-video-card-player"
+            src={`${video.url}?title=0&byline=0&portrait=0`}
+            allow="autoplay; fullscreen; picture-in-picture"
+            allowFullScreen
+            title="Vimeo preview"
+          />
+        ) : (
+          <video
+            className="adm-video-card-player"
+            src={video.url}
+            controls
+            muted
+            playsInline
+            preload="metadata"
+          />
+        )}
         <span className={`adm-video-status ${video.published ? "is-live" : "is-staged"}`}>
           {video.published ? "Live" : "Staged"}
         </span>
+        {isVimeo && <span className="adm-video-status-vimeo">Vimeo</span>}
       </div>
 
       <div className="adm-video-card-body">

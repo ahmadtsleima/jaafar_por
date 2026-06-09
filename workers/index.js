@@ -152,6 +152,8 @@ function buildR2Url(key) {
 
 function enrichRow(row) {
   if (!row) return row;
+  // Vimeo entries store `vimeo:{id}` in r2_key — keep their embed URL as-is
+  if (row.r2_key && row.r2_key.startsWith("vimeo:")) return row;
   return {
     ...row,
     url: row.r2_key ? buildR2Url(row.r2_key) : row.url,
@@ -396,9 +398,28 @@ export default {
       if (!requireAuth(request, env)) return jsonResponse({ error: "Unauthorized" }, 401);
       const form = await request.formData();
       const slot = form.get("slot") || "scroll_scrub";
-      const files = [...form.getAll("files"), form.get("file")].filter(Boolean);
-      if (files.length === 0) return jsonResponse({ error: "No file provided" }, 400);
       const isMotionSlot = String(slot).startsWith("motion_");
+
+      // ── Vimeo URL path (no R2 upload) ──────────────────────────
+      const vimeoId = form.get("vimeo_id");
+      if (vimeoId) {
+        if (!/^\d+$/.test(vimeoId)) return jsonResponse({ error: "Invalid Vimeo ID" }, 400);
+        const embedUrl = `https://player.vimeo.com/video/${vimeoId}`;
+        const id = crypto.randomUUID();
+        await env.DB.prepare(
+          `INSERT INTO videos (id, slot, url, r2_key, published, is_staged)
+           VALUES (?, ?, ?, ?, ?, ?)`
+        )
+          .bind(id, slot, embedUrl, `vimeo:${vimeoId}`, isMotionSlot ? 1 : 0, isMotionSlot ? 0 : 1)
+          .run();
+        const row = await env.DB.prepare(`SELECT * FROM videos WHERE id = ?`).bind(id).first();
+        // Don't run enrichRow — url is already the embed URL, not an r2_key
+        return jsonResponse({ video: row, videos: [row], validations: { format: true, duration: true, resolution: true } }, 201);
+      }
+
+      // ── File upload path (R2) ───────────────────────────────────
+      const files = [...form.getAll("files"), form.get("file")].filter(Boolean);
+      if (files.length === 0) return jsonResponse({ error: "No file or vimeo_id provided" }, 400);
       const inserted = [];
       for (const file of files) {
         const id = crypto.randomUUID();
