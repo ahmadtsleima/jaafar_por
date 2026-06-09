@@ -4,9 +4,9 @@ compatibility_flags = ["nodejs_compat"]
 account_id = "b9a37bd4d9ab04f8f3686130e5f764a6"
 main = "workers/index.js"
 
-# Explicitly configure the site block with its entry-point
-[site]
-bucket = "./dist"
+# Wrangler v4 assets binding (replaces deprecated [site] / KV Workers Sites)
+[assets]
+directory = "./dist"
 
 
 [observability.logs]

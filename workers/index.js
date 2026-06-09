@@ -1,8 +1,5 @@
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import { getAssetFromKV } from "@cloudflare/kv-asset-handler";
-// 1. IMPORT THE WRANGLER ASSET MANIFEST AT THE TOP OF THE FILE
-import __STATIC_CONTENT_MANIFEST from "__STATIC_CONTENT_MANIFEST";
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET,POST,PATCH,DELETE,OPTIONS",
@@ -84,46 +81,17 @@ function getContentType(pathname) {
   }[ext] || "application/octet-stream";
 }
 
-async function serveStaticAsset(request, env, ctx) {
-  const assetManifest = JSON.parse(__STATIC_CONTENT_MANIFEST);
-  const kvOptions = { ASSET_NAMESPACE: env.__STATIC_CONTENT, ASSET_MANIFEST: assetManifest };
-
+async function serveStaticAsset(request, env) {
+  // Wrangler v4 [assets] binding — handles hashed filenames and caching automatically
   try {
-    // Pass the manifest map explicitly so it can match hashed asset file names
-    return await getAssetFromKV({ request, waitUntil: ctx.waitUntil }, kvOptions);
-  } catch (err) {
-    if (request.method !== "GET") {
-      return new Response("Not found", { status: 404, headers: CORS_HEADERS });
-    }
-
-    // SPA fallback — send a clean GET request for /index.html so that
-    // headers/body from the original request don't confuse kv-asset-handler
+    return await env.ASSETS.fetch(request);
+  } catch {
+    // SPA fallback: serve index.html for any unmatched route
     try {
       const origin = new URL(request.url).origin;
-      const indexRequest = new Request(`${origin}/index.html`, {
-        method: "GET",
-        headers: { Accept: "text/html" },
-      });
-      const response = await getAssetFromKV(
-        { request: indexRequest, waitUntil: ctx.waitUntil },
-        kvOptions
-      );
-      // Return with the original status so the SPA router sees a 200
-      return new Response(response.body, {
-        status: 200,
-        headers: response.headers,
-      });
-    } catch (innerErr) {
-      // This only fires if index.html was never uploaded to KV.
-      // Run `npm run build` first, then `npm run deploy:wrangler` to fix.
-      console.error("SPA fallback failed — index.html missing from KV store:", innerErr);
-      return new Response(
-        `<!doctype html><html><head><title>Deploying…</title></head><body>
-         <h2>Site is being deployed</h2>
-         <p>If you see this, run <code>npm run deploy:wrangler</code> to upload the build.</p>
-         </body></html>`,
-        { status: 503, headers: { ...CORS_HEADERS, "content-type": "text/html; charset=utf-8" } }
-      );
+      return await env.ASSETS.fetch(new Request(`${origin}/index.html`, { method: "GET" }));
+    } catch {
+      return new Response("Not found", { status: 404, headers: CORS_HEADERS });
     }
   }
 }
@@ -493,7 +461,7 @@ export default {
 
     // Serve static assets (SPA) — exclude /api and /r2 paths
     if (method === "GET" && !pathname.startsWith("/api") && !pathname.startsWith("/r2")) {
-      return await serveStaticAsset(request, env, ctx);
+      return await serveStaticAsset(request, env);
     }
 
     return jsonResponse({ error: "Not found" }, 404);
