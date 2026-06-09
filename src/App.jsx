@@ -532,219 +532,99 @@ function CompareWidget({ item, onImageError }) {
   );
 }
 
-function ScrollScrubVideo() {
-  const sectionRef = useRef(null);
-  const videoRef = useRef(null);
-  const overlayRef = useRef(null);
-  const progressRef = useRef(0);
-  const [videoSrc, setVideoSrc] = useState("");
+function ReelShowcase() {
+  const [reels, setReels] = useState(null);
+  const [activeReel, setActiveReel] = useState(null);
 
   useEffect(() => {
-    fetch("/api/videos?slot=scroll_scrub")
+    fetch("/api/videos?slot=reel_showcase&all=1")
       .then((r) => r.json())
-      .then((data) => { if (data?.url) setVideoSrc(data.url); })
-      .catch(() => {});
+      .then((data) => setReels(Array.isArray(data) ? data : []))
+      .catch(() => setReels([]));
   }, []);
 
   useEffect(() => {
-    const video = videoRef.current;
-    const section = sectionRef.current;
-    if (!video || !section) return undefined;
+    if (!activeReel) return;
+    const close = (e) => { if (e.key === "Escape") setActiveReel(null); };
+    document.body.style.overflow = "hidden";
+    window.addEventListener("keydown", close);
+    return () => { document.body.style.overflow = ""; window.removeEventListener("keydown", close); };
+  }, [activeReel]);
 
-    video.pause();
-
-    let frame = null;
-    let touchY = null;
-
-    const getTopOffset = () => (window.innerWidth <= 700 ? 68 : 72);
-
-    const clampProgress = (value) => Math.max(0, Math.min(1, value));
-
-    const applyVideoSizing = () => {
-      const width = video.videoWidth || 1920;
-      const height = video.videoHeight || 1080;
-      const ratio = width / height;
-      const isVertical = ratio < 1;
-
-      section.style.setProperty("--scrub-video-aspect", `${width} / ${height}`);
-      section.style.setProperty("--scrub-video-ratio", ratio.toFixed(4));
-      section.style.setProperty("--scrub-section-height", isVertical ? "240vh" : "220vh");
-      section.style.setProperty("--scrub-section-min", isVertical ? "1320px" : "1180px");
-      section.dataset.orientation = isVertical ? "vertical" : "horizontal";
-    };
-
-    const setScrubProgress = (nextProgress) => {
-      const progress = clampProgress(nextProgress);
-      progressRef.current = progress;
-
-      if (video.duration && isFinite(video.duration)) {
-        video.currentTime = progress * video.duration;
-      }
-
-      if (overlayRef.current) {
-        let textOpacity = 0;
-        if (progress >= 0.5 && progress < 0.6) {
-          textOpacity = (progress - 0.5) / 0.1;
-        } else if (progress >= 0.6 && progress < 0.8) {
-          textOpacity = 1;
-        } else if (progress >= 0.8 && progress <= 0.85) {
-          textOpacity = (0.85 - progress) / 0.05;
-        }
-        overlayRef.current.style.opacity = textOpacity.toFixed(3);
-      }
-    };
-
-    const getPageProgress = () => {
-      const rect = section.getBoundingClientRect();
-      const topOffset = getTopOffset();
-      const distance = Math.max(section.offsetHeight - window.innerHeight + topOffset, 1);
-      return clampProgress((topOffset - rect.top) / distance);
-    };
-
-    const isSectionCapturing = () => {
-      const rect = section.getBoundingClientRect();
-      const topOffset = getTopOffset();
-      return rect.top <= topOffset + 1 && rect.bottom >= window.innerHeight - 1;
-    };
-
-    const releaseSection = (direction) => {
-      const topOffset = getTopOffset();
-      const nextScroll =
-        direction === "down"
-          ? section.offsetTop + section.offsetHeight - window.innerHeight + topOffset + 4
-          : Math.max(section.offsetTop - topOffset - 4, 0);
-
-      window.scrollTo({ top: nextScroll, behavior: "auto" });
-    };
-
-    const update = () => {
-      if (!isSectionCapturing()) {
-        setScrubProgress(getPageProgress());
-      }
-    };
-
-    const requestUpdate = () => {
-      if (frame) return;
-
-      frame = window.requestAnimationFrame(() => {
-        frame = null;
-        update();
-      });
-    };
-
-    const scrubByDelta = (delta, event) => {
-      if (!isSectionCapturing() || Math.abs(delta) < 0.5) return;
-
-      const progress = progressRef.current;
-      const scrollingDown = delta > 0;
-      const atEnd = progress >= 0.999;
-      const atStart = progress <= 0.001;
-
-      if ((scrollingDown && atEnd) || (!scrollingDown && atStart)) {
-        return;
-      }
-
-      if (event.cancelable) event.preventDefault();
-
-      const sensitivity = window.innerHeight <= 720 ? 1.45 : 1.85;
-      const nextProgress = progress + delta / (window.innerHeight * sensitivity);
-      setScrubProgress(nextProgress);
-
-      if (scrollingDown && progressRef.current >= 0.999) {
-        setScrubProgress(1);
-        releaseSection("down");
-      }
-
-      if (!scrollingDown && progressRef.current <= 0.001) {
-        setScrubProgress(0);
-        releaseSection("up");
-      }
-    };
-
-    const handleWheel = (event) => {
-      scrubByDelta(event.deltaY, event);
-    };
-
-    const handleTouchStart = (event) => {
-      touchY = event.touches[0]?.clientY ?? null;
-    };
-
-    const handleTouchMove = (event) => {
-      if (touchY == null) return;
-      const nextY = event.touches[0]?.clientY ?? touchY;
-      const delta = touchY - nextY;
-      touchY = nextY;
-      scrubByDelta(delta, event);
-    };
-
-    const handleTouchEnd = () => {
-      touchY = null;
-    };
-
-    const handlePlay = () => video.pause();
-    const handleMetadata = () => {
-      applyVideoSizing();
-      setScrubProgress(progressRef.current);
-    };
-    video.addEventListener("play", handlePlay);
-    video.addEventListener("loadedmetadata", handleMetadata);
-    window.addEventListener("scroll", requestUpdate, { passive: true });
-    window.addEventListener("resize", requestUpdate);
-    window.addEventListener("wheel", handleWheel, { passive: false });
-    window.addEventListener("touchstart", handleTouchStart, { passive: true });
-    window.addEventListener("touchmove", handleTouchMove, { passive: false });
-    window.addEventListener("touchend", handleTouchEnd, { passive: true });
-    if (video.readyState >= 1) handleMetadata();
-    else applyVideoSizing();
-    update();
-
-    return () => {
-      if (frame) window.cancelAnimationFrame(frame);
-      video.removeEventListener("play", handlePlay);
-      video.removeEventListener("loadedmetadata", handleMetadata);
-      window.removeEventListener("scroll", requestUpdate);
-      window.removeEventListener("resize", requestUpdate);
-      window.removeEventListener("wheel", handleWheel);
-      window.removeEventListener("touchstart", handleTouchStart);
-      window.removeEventListener("touchmove", handleTouchMove);
-      window.removeEventListener("touchend", handleTouchEnd);
-    };
-  }, [videoSrc]);
-
-  if (!videoSrc) return null;
+  if (!reels || reels.length === 0) return null;
 
   return (
-    <section
-      className="scrub-video-section"
-      id="behind-lens"
-      ref={sectionRef}
-      aria-label="Behind the lens video sequence"
-    >
-      <div className="scrub-video-sticky">
-        <div className="scrub-video-label" aria-hidden="true">
-          <span className="scrub-video-dot" aria-hidden="true" />
-          BEHIND THE LENS
+    <section className="reel-section reveal-block" id="reels" aria-labelledby="reels-title">
+      <div className="reel-section-inner">
+        <div className="reel-section-head">
+          <p className="eyebrow">Featured Work</p>
+          <h2 id="reels-title">Selected Reels</h2>
         </div>
 
-        <video
-          ref={videoRef}
-          className="scrub-video-element"
-          src={videoSrc}
-          muted
-          playsInline
-          preload="auto"
-        />
-
-        <div
-          className="scrub-video-overlay"
-          ref={overlayRef}
-          style={{ opacity: 0 }}
-          aria-hidden="true"
-        >
-          <div className="scrub-video-gradient" />
-          <p className="scrub-video-quote">Every frame is a decision.</p>
+        <div className="reel-track" role="list">
+          {reels.map((reel, i) => (
+            <article
+              key={reel.id || i}
+              className="reel-card"
+              role="listitem"
+              onClick={() => setActiveReel(reel)}
+              onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setActiveReel(reel); } }}
+              tabIndex={0}
+              aria-label={`Play ${reel.title || `Reel ${i + 1}`}`}
+            >
+              <div className="reel-card-media">
+                {isVimeoUrl(reel.url) ? (
+                  <iframe
+                    src={vimeoSrc(reel.url, { background: true })}
+                    allow="autoplay; fullscreen; picture-in-picture"
+                    allowFullScreen
+                    title={reel.title || `Reel ${i + 1}`}
+                    loading="lazy"
+                  />
+                ) : (
+                  <video src={reel.url} muted playsInline loop autoPlay preload="metadata" />
+                )}
+                <div className="reel-card-play" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+                </div>
+              </div>
+              <div className="reel-card-caption">
+                <span className="reel-card-index">#{String(i + 1).padStart(2, "0")}</span>
+                {reel.title && <strong>{reel.title}</strong>}
+              </div>
+            </article>
+          ))}
         </div>
       </div>
+
+      {/* Fullscreen popup */}
+      {activeReel && createPortal(
+        <div className="video-popup" role="dialog" aria-modal="true" aria-label="Reel player">
+          <button className="video-popup-backdrop" type="button" onClick={() => setActiveReel(null)} aria-label="Close" />
+          <div className="video-popup-panel">
+            <button className="video-popup-close" type="button" onClick={() => setActiveReel(null)} aria-label="Close">×</button>
+            <div className="video-popup-media">
+              {isVimeoUrl(activeReel.url) ? (
+                <iframe
+                  src={vimeoSrc(activeReel.url)}
+                  allow="autoplay; fullscreen; picture-in-picture"
+                  allowFullScreen
+                  title={activeReel.title || "Reel"}
+                />
+              ) : (
+                <video src={activeReel.url} controls autoPlay playsInline />
+              )}
+            </div>
+            {activeReel.title && (
+              <div className="video-popup-caption">
+                <span>Featured Reel</span>
+                <strong>{activeReel.title}</strong>
+              </div>
+            )}
+          </div>
+        </div>,
+        document.body
+      )}
     </section>
   );
 }
