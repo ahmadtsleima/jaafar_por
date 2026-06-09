@@ -151,7 +151,8 @@ async function queryPhotos(db, { category, slot, publishedOnly = true }) {
 }
 
 async function queryVideos(db, { slot, all = false }) {
-  const visibilityClause = slot && !String(slot).startsWith("motion_") ? " AND published = 1" : "";
+  const isMultiSlot = slot && (String(slot).startsWith("motion_") || String(slot) === "reel_showcase");
+  const visibilityClause = isMultiSlot ? "" : " AND published = 1";
   if (all) {
     const { results } = await db.prepare(
       `SELECT id, slot, url, r2_key, duration_seconds, fps, resolution_width, resolution_height, uploaded_at
@@ -159,9 +160,10 @@ async function queryVideos(db, { slot, all = false }) {
     ).bind(slot).all();
     return results.map(buildVideoRow);
   }
+  const limitClause = isMultiSlot ? "" : " LIMIT 1";
   const { results } = await db.prepare(
     `SELECT id, slot, url, r2_key, duration_seconds, fps, resolution_width, resolution_height, uploaded_at
-     FROM videos WHERE slot = ?${visibilityClause} ORDER BY uploaded_at DESC LIMIT 1`
+     FROM videos WHERE slot = ?${visibilityClause} ORDER BY uploaded_at DESC${limitClause}`
   ).bind(slot).all();
   return results.map(buildVideoRow);
 }
@@ -358,7 +360,7 @@ export default {
       if (!requireAuth(request, env)) return jsonResponse({ error: "Unauthorized" }, 401);
       const form = await request.formData();
       const slot = form.get("slot") || "scroll_scrub";
-      const isMotionSlot = String(slot).startsWith("motion_");
+      const isMotionSlot = String(slot).startsWith("motion_") || String(slot) === "reel_showcase";
 
       // ── Vimeo URL path (no R2 upload) ──────────────────────────
       const vimeoId = form.get("vimeo_id");
@@ -405,7 +407,8 @@ export default {
       const id = pathname.replace("/api/admin/videos/", "").replace("/publish", "").replace(/\/+$/, "");
       const row = await env.DB.prepare(`SELECT slot FROM videos WHERE id = ?`).bind(id).first();
       if (!row) return jsonResponse({ error: "Video not found" }, 404);
-      if (!String(row.slot).startsWith("motion_")) {
+      const allowMulti = String(row.slot).startsWith("motion_") || String(row.slot) === "reel_showcase";
+      if (!allowMulti) {
         await env.DB.prepare(`UPDATE videos SET published = 0 WHERE slot = ? AND published = 1`).bind(row.slot).run();
       }
       await env.DB.prepare(`UPDATE videos SET published = 1, is_staged = 0 WHERE id = ?`).bind(id).run();
