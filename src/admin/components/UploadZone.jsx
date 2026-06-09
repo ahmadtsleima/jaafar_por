@@ -4,12 +4,16 @@ import SlotSelector from "./SlotSelector.jsx";
 import { api } from "../api.js";
 import imageCompression from "browser-image-compression";
 
-export default function UploadZone({ onUploaded }) {
+// allowedSlots: string[] — if provided, only these slot IDs appear in the dropdown
+export default function UploadZone({ onUploaded, allowedSlots = null }) {
   const [file, setFile] = useState(null);
   const [originalFile, setOriginalFile] = useState(null);
   const [preview, setPreview] = useState(null);
   const [dims, setDims] = useState(null);
-  const [slot, setSlot] = useState(SLOTS[0].id);
+  const availableSlots = allowedSlots
+    ? SLOTS.filter((s) => allowedSlots.includes(s.id))
+    : SLOTS;
+  const [slot, setSlot] = useState((allowedSlots ? availableSlots[0]?.id : SLOTS[0].id) ?? SLOTS[0].id);
   const [category, setCategory] = useState("brands");
   const [title, setTitle] = useState("");
   const [altText, setAltText] = useState("");
@@ -184,7 +188,7 @@ export default function UploadZone({ onUploaded }) {
       <div className="adm-upload-fields">
         <label className="adm-field">
           <span>Assign to slot</span>
-          <SlotSelector value={slot} onChange={setSlot} />
+          <SlotSelector value={slot} onChange={setSlot} allowedSlots={availableSlots} />
         </label>
 
         <label className="adm-field">

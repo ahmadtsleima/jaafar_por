@@ -15,7 +15,7 @@ export const SLOTS = [
 ];
 
 export const VIDEO_SLOTS = [
-  { id: "scroll_scrub",        label: "Scroll-scrub video",        notes: "Frame-by-frame stop-motion sequence between sections." },
+  { id: "reel_showcase",       label: "Reel Showcase",             notes: "Horizontal featured reel section on the home page. Add multiple videos — they scroll horizontally." },
   { id: "motion_brands",       label: "Motion - Brands",           notes: "Published videos appear in the Brands filter of Video Projects." },
   { id: "motion_filmmaking",   label: "Motion - Filmmaking",       notes: "Published videos appear in the Filmmaking filter of Video Projects." },
   { id: "motion_commercial",   label: "Motion - Commercial",       notes: "Published videos appear in the Commercial filter of Video Projects." },

@@ -18,14 +18,15 @@ const WIREFRAME_ZONES = [
 const THREE_PLANES_IDS = ["three_js_plane_1","three_js_plane_2","three_js_plane_3","three_js_plane_4","three_js_plane_5","three_js_plane_6"];
 const THREE_ZONE = { label: "3D", style: { top: "82%", left: "0%", width: "100%", height: "10%" } };
 
-export default function SlotSelector({ value, onChange }) {
-  const selected = SLOTS.find((s) => s.id === value) ?? SLOTS[0];
+// allowedSlots: slot objects array — pass to restrict which slots appear
+export default function SlotSelector({ value, onChange, allowedSlots = SLOTS }) {
+  const selected = allowedSlots.find((s) => s.id === value) ?? allowedSlots[0] ?? SLOTS[0];
   const isThreePlane = THREE_PLANES_IDS.includes(value);
 
   return (
     <div className="adm-slot-selector">
       <select className="adm-slot-select" value={value} onChange={(e) => onChange(e.target.value)}>
-        {SLOTS.map((s) => (
+        {allowedSlots.map((s) => (
           <option key={s.id} value={s.id}>
             {s.label} ({s.width}×{s.height})
           </option>

@@ -17,7 +17,19 @@ export default function Videos() {
         </div>
         <div className="adm-video-page-help">
           <span>Motion categories accept multiple videos.</span>
-          <span>Scroll-scrub keeps one published video.</span>
+          <span>Reel Showcase scrolls horizontally on the page.</span>
+        </div>
+      </section>
+
+      <section className="adm-video-group" aria-labelledby="showcase-videos-title">
+        <div className="adm-video-group-head">
+          <p className="adm-video-kicker">Home page · horizontal reel</p>
+          <h2 id="showcase-videos-title">Reel Showcase</h2>
+        </div>
+        <div className="adm-video-manager-stack">
+          {systemSlots.filter((s) => s.id === "reel_showcase").map((slot) => (
+            <VideoManager key={slot.id} slot={slot.id} label={slot.label} notes={slot.notes} />
+          ))}
         </div>
       </section>
 
@@ -36,10 +48,10 @@ export default function Videos() {
       <section className="adm-video-group" aria-labelledby="system-videos-title">
         <div className="adm-video-group-head">
           <p className="adm-video-kicker">Single video slots</p>
-          <h2 id="system-videos-title">Page Sequences</h2>
+          <h2 id="system-videos-title">Other Slots</h2>
         </div>
         <div className="adm-video-manager-stack">
-          {systemSlots.map((slot) => (
+          {systemSlots.filter((s) => s.id !== "reel_showcase").map((slot) => (
             <VideoManager key={slot.id} slot={slot.id} label={slot.label} notes={slot.notes} />
           ))}
         </div>
