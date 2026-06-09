@@ -82,18 +82,10 @@ function getContentType(pathname) {
 }
 
 async function serveStaticAsset(request, env) {
-  // Wrangler v4 [assets] binding — handles hashed filenames and caching automatically
-  try {
-    return await env.ASSETS.fetch(request);
-  } catch {
-    // SPA fallback: serve index.html for any unmatched route
-    try {
-      const origin = new URL(request.url).origin;
-      return await env.ASSETS.fetch(new Request(`${origin}/index.html`, { method: "GET" }));
-    } catch {
-      return new Response("Not found", { status: 404, headers: CORS_HEADERS });
-    }
-  }
+  // Wrangler v4 [assets] binding with not_found_handling = "single-page-application"
+  // Cloudflare automatically serves index.html for any path that has no matching file,
+  // so no manual SPA fallback needed here.
+  return env.ASSETS.fetch(request);
 }
 
 function getToken(request) {
