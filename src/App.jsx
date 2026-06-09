@@ -587,9 +587,9 @@ function ReelShowcase() {
   };
 
   return (
-    <section className="reel-section reveal-block" id="reels" aria-labelledby="reels-title">
+    <section className="reel-section" id="reels" aria-labelledby="reels-title">
       {/* ── Bordered card wrapper — same pattern as Selected Frames & Video Projects ── */}
-      <div className="reel-card-wrap">
+      <div className="reel-card-wrap reel-fade-in">
 
         {/* ── Centered section header ── */}
         <header className="reel-sec-header">
