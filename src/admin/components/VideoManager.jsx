@@ -36,7 +36,7 @@ export default function VideoManager({ slot, label, notes }) {
   const [vimeoInput, setVimeoInput] = useState("");
   const [vimeoId, setVimeoId] = useState(null);
   const inputRef = useRef(null);
-  const isMotionSlot = slot.startsWith("motion_");
+  const isMotionSlot = slot.startsWith("motion_") || slot === "reel_showcase";
   // scroll_scrub needs direct <video> frame control — Vimeo iframe can't do that
   const vimeoAllowed = slot !== "scroll_scrub";
   const liveCount = videos.filter((video) => video.published).length;
