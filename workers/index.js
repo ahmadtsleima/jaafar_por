@@ -9,7 +9,7 @@ const CORS_HEADERS = {
   "Access-Control-Allow-Headers": "Content-Type, Authorization",
   "Access-Control-Allow-Credentials": "true",
 };
-
+//#endregion
 const DB_INIT_SQL = [
   `CREATE TABLE IF NOT EXISTS photos (
     id TEXT PRIMARY KEY,

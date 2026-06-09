@@ -15,7 +15,7 @@ invocation_logs = true
 
 [observability]
 enabled = false
-
+#et
 # Global vars - these will now act as your production variables
 [vars]
 JWT_SECRET = "28829ecf49bf1b1efea62cd0db161eab5ac1d42e30a005a74b1d9df28022eb277340c3d07cc2f310bdacd05aa2c1116f"
