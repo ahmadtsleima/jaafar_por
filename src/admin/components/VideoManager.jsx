@@ -64,14 +64,8 @@ export default function VideoManager({ slot, label, notes }) {
       const fd = new FormData();
       files.forEach((file) => fd.append(files.length === 1 ? "file" : "files", file));
       fd.append("slot", slot);
-      
-      // Simulate progress (0-90% during upload)
-      const progressInterval = setInterval(() => {
-        setUploadProgress((prev) => Math.min(prev + Math.random() * 15, 90));
-      }, 500);
 
-      const result = await api.videos.upload(fd);
-      clearInterval(progressInterval);
+      const result = await api.videos.upload(fd, (pct) => setUploadProgress(pct));
       setUploadProgress(100);
       setValidations(result.validations);
       setMessage(`✓ ${files.length} video${files.length === 1 ? "" : "s"} uploaded${isMotionSlot ? " and published" : " as staged"}.`);

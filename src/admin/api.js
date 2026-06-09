@@ -44,6 +44,32 @@ async function apiFetch(path, options = {}) {
   return data;
 }
 
+// XHR-based upload with real progress events
+function uploadWithProgress(path, formData, onProgress) {
+  return new Promise((resolve, reject) => {
+    const token = getToken();
+    const xhr = new XMLHttpRequest();
+    xhr.open("POST", `${API_BASE}/api${path}`);
+    if (token) xhr.setRequestHeader("Authorization", `Bearer ${token}`);
+
+    xhr.upload.addEventListener("progress", (e) => {
+      if (e.lengthComputable) onProgress(Math.round((e.loaded / e.total) * 100));
+    });
+
+    xhr.addEventListener("load", () => {
+      if (xhr.status === 401) { clearToken(); window.location.reload(); return; }
+      try {
+        const data = JSON.parse(xhr.responseText);
+        if (xhr.status >= 400) reject(new Error(data.error || xhr.statusText));
+        else resolve(data);
+      } catch { reject(new Error(xhr.statusText)); }
+    });
+
+    xhr.addEventListener("error", () => reject(new Error("Network error")));
+    xhr.send(formData);
+  });
+}
+
 export const api = {
   login: (password) =>
     apiFetch("/admin/login", { method: "POST", body: JSON.stringify({ password }) }),
@@ -65,8 +91,8 @@ export const api = {
 
   videos: {
     list: (slot = "scroll_scrub") => apiFetch(`/admin/videos?slot=${slot}`),
-    upload: (formData) =>
-      apiFetch("/admin/videos", { method: "POST", body: formData }),
+    upload: (formData, onProgress) =>
+      uploadWithProgress("/admin/videos", formData, onProgress ?? (() => {})),
     publish: (id) =>
       apiFetch(`/admin/videos/${id}/publish`, { method: "PATCH", body: JSON.stringify({}) }),
     remove: (id) =>

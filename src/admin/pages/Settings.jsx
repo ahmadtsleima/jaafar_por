@@ -38,6 +38,39 @@ export default function Settings() {
       </section>
 
       <section className="adm-section">
+        <h2 className="adm-section-title">Video Slot Specifications</h2>
+        <p className="adm-settings-note">
+          Recommended export settings for each video slot. Keep files under the size limit for fast uploads.
+        </p>
+        <div className="adm-slots-table-wrap">
+          <table className="adm-slots-table">
+            <thead>
+              <tr>
+                <th>Slot</th>
+                <th>Resolution</th>
+                <th>Format</th>
+                <th>Max Size</th>
+                <th>FPS</th>
+                <th>Notes</th>
+              </tr>
+            </thead>
+            <tbody>
+              {VIDEO_SLOT_ROWS.map((row) => (
+                <tr key={row.slot}>
+                  <td><code>{row.slot}</code></td>
+                  <td>{row.resolution}</td>
+                  <td>{row.format}</td>
+                  <td><strong>{row.maxSize}</strong></td>
+                  <td>{row.fps}</td>
+                  <td>{row.notes}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section className="adm-section">
         <h2 className="adm-section-title">Session</h2>
         <button className="adm-btn adm-btn-danger" onClick={handleLogout}>
           Sign out
@@ -46,6 +79,15 @@ export default function Settings() {
     </div>
   );
 }
+
+const VIDEO_SLOT_ROWS = [
+  { slot: "scroll_scrub",      resolution: "1920 × 1080", format: "MP4 (H.264)", maxSize: "150 MB", fps: "24–30", notes: "Stop-motion frame sequence. Smooth scrub needs high frame count." },
+  { slot: "motion_brands",     resolution: "1920 × 1080", format: "MP4 (H.264)", maxSize: "200 MB", fps: "24–60", notes: "Brand project reels. Multiple videos allowed per slot." },
+  { slot: "motion_filmmaking", resolution: "1920 × 1080", format: "MP4 (H.264)", maxSize: "200 MB", fps: "24–60", notes: "Filmmaking reels. Compress to H.264 before uploading." },
+  { slot: "motion_commercial", resolution: "1920 × 1080", format: "MP4 (H.264)", maxSize: "200 MB", fps: "24–60", notes: "Commercial reels. Aim for < 100 MB for faster load." },
+  { slot: "motion_fashion",    resolution: "1920 × 1080", format: "MP4 (H.264)", maxSize: "200 MB", fps: "24–60", notes: "Fashion reels. Vertical (9:16) also accepted." },
+  { slot: "services_reel",     resolution: "1920 × 1080", format: "MP4 (H.264) / WebM", maxSize: "80 MB",  fps: "24–30", notes: "Ambient looping background. Keep short (10–30 s) and muted." },
+];
 
 const SLOT_ROWS = [
   { slot: "hero_background",     size: "1920 × 1080", ratio: "16:9",   notes: "Full-bleed hero. Subject center-right. Top 80px clear." },
