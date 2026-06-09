@@ -233,8 +233,8 @@ function App() {
         <IntroBand />
         <SelectedFrames onImageError={handleImageError} />
         <CompareSection onImageError={handleImageError} />
+        <ReelShowcase />
         <VideoProjects />
-        <ScrollScrubVideo />
         <Services onImageError={handleImageError} />
         {/* <CreativeDirection /> */}
         <About onImageError={handleImageError} />
