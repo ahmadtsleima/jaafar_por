@@ -86,30 +86,45 @@ function getContentType(pathname) {
 
 async function serveStaticAsset(request, env, ctx) {
   const assetManifest = JSON.parse(__STATIC_CONTENT_MANIFEST);
-  
+  const kvOptions = { ASSET_NAMESPACE: env.__STATIC_CONTENT, ASSET_MANIFEST: assetManifest };
+
   try {
     // Pass the manifest map explicitly so it can match hashed asset file names
-    return await getAssetFromKV(
-      { request, waitUntil: ctx.waitUntil },
-      { ASSET_NAMESPACE: env.__STATIC_CONTENT, ASSET_MANIFEST: assetManifest }
-    );
+    return await getAssetFromKV({ request, waitUntil: ctx.waitUntil }, kvOptions);
   } catch (err) {
-    if (request.method === "GET") {
-      try {
-        // SPA Fallback: Rewrite request path to /index.html if route not found
-        const url = new URL(request.url);
-        url.pathname = "/index.html";
-        const indexRequest = new Request(url.toString(), request);
-        
-        return await getAssetFromKV(
-          { request: indexRequest, waitUntil: ctx.waitUntil },
-          { ASSET_NAMESPACE: env.__STATIC_CONTENT, ASSET_MANIFEST: assetManifest }
-        );
-      } catch (innerErr) {
-        return new Response("Index.html missing from KV store", { status: 404, headers: CORS_HEADERS });
-      }
+    if (request.method !== "GET") {
+      return new Response("Not found", { status: 404, headers: CORS_HEADERS });
     }
-    return new Response("Not found", { status: 404, headers: CORS_HEADERS });
+
+    // SPA fallback — send a clean GET request for /index.html so that
+    // headers/body from the original request don't confuse kv-asset-handler
+    try {
+      const origin = new URL(request.url).origin;
+      const indexRequest = new Request(`${origin}/index.html`, {
+        method: "GET",
+        headers: { Accept: "text/html" },
+      });
+      const response = await getAssetFromKV(
+        { request: indexRequest, waitUntil: ctx.waitUntil },
+        kvOptions
+      );
+      // Return with the original status so the SPA router sees a 200
+      return new Response(response.body, {
+        status: 200,
+        headers: response.headers,
+      });
+    } catch (innerErr) {
+      // This only fires if index.html was never uploaded to KV.
+      // Run `npm run build` first, then `npm run deploy:wrangler` to fix.
+      console.error("SPA fallback failed — index.html missing from KV store:", innerErr);
+      return new Response(
+        `<!doctype html><html><head><title>Deploying…</title></head><body>
+         <h2>Site is being deployed</h2>
+         <p>If you see this, run <code>npm run deploy:wrangler</code> to upload the build.</p>
+         </body></html>`,
+        { status: 503, headers: { ...CORS_HEADERS, "content-type": "text/html; charset=utf-8" } }
+      );
+    }
   }
 }
 
@@ -455,21 +470,9 @@ export default {
       return new Response(object.body, { status: 200, headers });
     }
 
-        // Replace the bottom section of your fetch handler with this:
-
-    if (method === "GET" && pathname.startsWith("/r2/")) {
-    const key = decodeURIComponent(pathname.replace("/r2/", ""));
-    const object = await env.R2_BUCKET.get(key);
-    if (!object) return new Response("Not found", { status: 404, headers: CORS_HEADERS });
-    const headers = new Headers(CORS_HEADERS);
-    if (object.httpMetadata?.contentType) headers.set("content-type", object.httpMetadata.contentType);
-    if (object.size) headers.set("content-length", String(object.size));
-    return new Response(object.body, { status: 200, headers });
-    }
-
-    // CRITICAL FIX: Explicitly exclude /api/ and /r2/ paths from hitting your static asset engine
+    // Serve static assets (SPA) — exclude /api and /r2 paths
     if (method === "GET" && !pathname.startsWith("/api") && !pathname.startsWith("/r2")) {
-    return await serveStaticAsset(request, env, ctx);
+      return await serveStaticAsset(request, env, ctx);
     }
 
     return jsonResponse({ error: "Not found" }, 404);
