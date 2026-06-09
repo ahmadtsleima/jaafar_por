@@ -26,6 +26,7 @@ FRONTEND_URL = "https://jaafarsleiman.com" # <--- Fixed to your real domain
 # Global bindings for production
 [[d1_databases]]
 binding = "DB"
+database_name = "jaafarportef"
 database_id = "27af65af-c2c0-4dc3-8f71-5fb35c922e59"
 
 [[r2_buckets]]
