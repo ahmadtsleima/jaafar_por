@@ -533,8 +533,11 @@ function CompareWidget({ item, onImageError }) {
 }
 
 function ReelShowcase() {
-  const [reels, setReels] = useState(null);
-  const [activeReel, setActiveReel] = useState(null);
+  const [reels, setReels]       = useState(null);
+  const [activeIdx, setActiveIdx] = useState(0);
+  const [popup, setPopup]       = useState(false);
+  const [transitioning, setTransitioning] = useState(false);
+  const thumbsRef = useRef(null);
 
   useEffect(() => {
     fetch("/api/videos?slot=reel_showcase&all=1")
@@ -543,82 +546,190 @@ function ReelShowcase() {
       .catch(() => setReels([]));
   }, []);
 
+  /* Close popup on Escape */
   useEffect(() => {
-    if (!activeReel) return;
-    const close = (e) => { if (e.key === "Escape") setActiveReel(null); };
+    if (!popup) return;
+    const fn = (e) => { if (e.key === "Escape") setPopup(false); };
     document.body.style.overflow = "hidden";
-    window.addEventListener("keydown", close);
-    return () => { document.body.style.overflow = ""; window.removeEventListener("keydown", close); };
-  }, [activeReel]);
+    window.addEventListener("keydown", fn);
+    return () => { document.body.style.overflow = ""; window.removeEventListener("keydown", fn); };
+  }, [popup]);
+
+  /* Keyboard nav on the section */
+  useEffect(() => {
+    if (!reels?.length) return;
+    const fn = (e) => {
+      if (e.key === "ArrowRight") go(1);
+      if (e.key === "ArrowLeft")  go(-1);
+    };
+    window.addEventListener("keydown", fn);
+    return () => window.removeEventListener("keydown", fn);
+  }, [reels, activeIdx]);
+
+  /* Scroll active thumb into view */
+  useEffect(() => {
+    const el = thumbsRef.current?.children[activeIdx];
+    el?.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
+  }, [activeIdx]);
 
   if (!reels || reels.length === 0) return null;
 
+  const active = reels[activeIdx];
+  const total  = reels.length;
+
+  const go = (dir) => {
+    if (transitioning) return;
+    setTransitioning(true);
+    setTimeout(() => {
+      setActiveIdx((i) => (i + dir + total) % total);
+      setTransitioning(false);
+    }, 220);
+  };
+
   return (
     <section className="reel-section reveal-block" id="reels" aria-labelledby="reels-title">
-      <div className="reel-section-inner">
-        <div className="reel-section-head">
-          <p className="eyebrow">Featured Work</p>
-          <h2 id="reels-title">Selected Reels</h2>
+      {/* ── Header row ── */}
+      <div className="reel-header">
+        <div className="reel-header-left">
+          <span className="reel-section-num" aria-hidden="true">03</span>
+          <div>
+            <p className="eyebrow">Featured Work</p>
+            <h2 className="reel-title" id="reels-title">Selected Reels</h2>
+          </div>
+        </div>
+        <div className="reel-header-right">
+          <span className="reel-counter" aria-label={`${activeIdx + 1} of ${total}`}>
+            <strong>{String(activeIdx + 1).padStart(2, "0")}</strong>
+            <span>/</span>
+            <span>{String(total).padStart(2, "0")}</span>
+          </span>
+          <div className="reel-nav-btns" role="group" aria-label="Reel navigation">
+            <button className="reel-nav-btn" type="button" onClick={() => go(-1)} aria-label="Previous reel">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M15 18l-6-6 6-6"/></svg>
+            </button>
+            <button className="reel-nav-btn" type="button" onClick={() => go(1)} aria-label="Next reel">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M9 18l6-6-6-6"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* ── Featured player ── */}
+      <div className="reel-featured-wrap">
+        <div className={`reel-featured${transitioning ? " is-transitioning" : ""}`}>
+          {/* Media */}
+          <div className="reel-featured-media">
+            {isVimeoUrl(active.url) ? (
+              <iframe
+                key={active.id || activeIdx}
+                src={vimeoSrc(active.url, { background: true })}
+                allow="autoplay; fullscreen; picture-in-picture"
+                allowFullScreen
+                title={active.title || `Reel ${activeIdx + 1}`}
+              />
+            ) : (
+              <video
+                key={active.id || activeIdx}
+                src={active.url}
+                muted playsInline loop autoPlay preload="metadata"
+              />
+            )}
+            {/* gradient overlay */}
+            <div className="reel-featured-gradient" aria-hidden="true" />
+          </div>
+
+          {/* Overlay info */}
+          <div className="reel-featured-info" aria-hidden="true">
+            <span className="reel-featured-num">{String(activeIdx + 1).padStart(2, "0")}</span>
+            {active.title && <p className="reel-featured-title">{active.title}</p>}
+          </div>
+
+          {/* Play button */}
+          <button
+            className="reel-featured-play"
+            type="button"
+            onClick={() => setPopup(true)}
+            aria-label={`Play ${active.title || "reel"} in fullscreen`}
+          >
+            <span className="reel-play-ring" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+            </span>
+            <span className="reel-play-label">Play</span>
+          </button>
+
+          {/* Swipe / drag hint */}
+          <div className="reel-drag-hint" aria-hidden="true">
+            <span>← drag →</span>
+          </div>
         </div>
 
-        <div className="reel-track" role="list">
-          {reels.map((reel, i) => (
-            <article
-              key={reel.id || i}
-              className="reel-card"
-              role="listitem"
-              onClick={() => setActiveReel(reel)}
-              onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setActiveReel(reel); } }}
-              tabIndex={0}
-              aria-label={`Play ${reel.title || `Reel ${i + 1}`}`}
-            >
-              <div className="reel-card-media">
-                {isVimeoUrl(reel.url) ? (
-                  <iframe
-                    src={vimeoSrc(reel.url, { background: true })}
-                    allow="autoplay; fullscreen; picture-in-picture"
-                    allowFullScreen
-                    title={reel.title || `Reel ${i + 1}`}
-                    loading="lazy"
-                  />
-                ) : (
-                  <video src={reel.url} muted playsInline loop autoPlay preload="metadata" />
-                )}
-                <div className="reel-card-play" aria-hidden="true">
-                  <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
-                </div>
-              </div>
-              <div className="reel-card-caption">
-                <span className="reel-card-index">#{String(i + 1).padStart(2, "0")}</span>
-                {reel.title && <strong>{reel.title}</strong>}
-              </div>
-            </article>
+        {/* Progress bar */}
+        <div className="reel-progress" aria-hidden="true">
+          {reels.map((_, i) => (
+            <button
+              key={i}
+              type="button"
+              className={`reel-progress-dot${i === activeIdx ? " is-active" : ""}`}
+              onClick={() => { if (!transitioning) { setTransitioning(true); setTimeout(() => { setActiveIdx(i); setTransitioning(false); }, 220); } }}
+              aria-label={`Go to reel ${i + 1}`}
+            />
           ))}
         </div>
       </div>
 
-      {/* Fullscreen popup */}
-      {activeReel && createPortal(
+      {/* ── Thumbnail rail ── */}
+      {total > 1 && (
+        <div className="reel-thumbs-wrap">
+          <div className="reel-thumbs" ref={thumbsRef} role="list">
+            {reels.map((reel, i) => (
+              <button
+                key={reel.id || i}
+                type="button"
+                className={`reel-thumb${i === activeIdx ? " is-active" : ""}`}
+                onClick={() => { if (!transitioning && i !== activeIdx) { setTransitioning(true); setTimeout(() => { setActiveIdx(i); setTransitioning(false); }, 220); } }}
+                role="listitem"
+                aria-label={reel.title || `Reel ${i + 1}`}
+                aria-current={i === activeIdx ? "true" : undefined}
+              >
+                <div className="reel-thumb-media">
+                  {isVimeoUrl(reel.url) ? (
+                    <iframe
+                      src={`https://player.vimeo.com/video/${reel.url.match(/\/(\d+)/)?.[1]}?background=1&muted=1`}
+                      allow="autoplay"
+                      title=""
+                      loading="lazy"
+                      tabIndex={-1}
+                    />
+                  ) : (
+                    <video src={reel.url} muted playsInline preload="metadata" tabIndex={-1} />
+                  )}
+                  <div className="reel-thumb-overlay" aria-hidden="true" />
+                </div>
+                <span className="reel-thumb-num">{String(i + 1).padStart(2, "0")}</span>
+                {reel.title && <span className="reel-thumb-title">{reel.title}</span>}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ── Fullscreen popup ── */}
+      {popup && createPortal(
         <div className="video-popup" role="dialog" aria-modal="true" aria-label="Reel player">
-          <button className="video-popup-backdrop" type="button" onClick={() => setActiveReel(null)} aria-label="Close" />
+          <button className="video-popup-backdrop" type="button" onClick={() => setPopup(false)} aria-label="Close" />
           <div className="video-popup-panel">
-            <button className="video-popup-close" type="button" onClick={() => setActiveReel(null)} aria-label="Close">×</button>
+            <button className="video-popup-close" type="button" onClick={() => setPopup(false)} aria-label="Close">×</button>
             <div className="video-popup-media">
-              {isVimeoUrl(activeReel.url) ? (
-                <iframe
-                  src={vimeoSrc(activeReel.url)}
-                  allow="autoplay; fullscreen; picture-in-picture"
-                  allowFullScreen
-                  title={activeReel.title || "Reel"}
-                />
+              {isVimeoUrl(active.url) ? (
+                <iframe src={vimeoSrc(active.url)} allow="autoplay; fullscreen; picture-in-picture" allowFullScreen title={active.title || "Reel"} />
               ) : (
-                <video src={activeReel.url} controls autoPlay playsInline />
+                <video src={active.url} controls autoPlay playsInline />
               )}
             </div>
-            {activeReel.title && (
+            {active.title && (
               <div className="video-popup-caption">
-                <span>Featured Reel</span>
-                <strong>{activeReel.title}</strong>
+                <span>Selected Reel — {String(activeIdx + 1).padStart(2, "0")} / {String(total).padStart(2, "0")}</span>
+                <strong>{active.title}</strong>
               </div>
             )}
           </div>
