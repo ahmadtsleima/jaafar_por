@@ -625,6 +625,7 @@ a {
   overflow: hidden;
   transform: translate3d(0, calc(var(--hero-scroll) * -92px), 0) scale(calc(1 - (var(--hero-scroll) * 0.025)));
   transform-origin: center top;
+  contain: paint;
   will-change: transform;
 }
 
@@ -634,6 +635,7 @@ a {
   object-fit: cover;
   filter: grayscale(1) contrast(1.06) brightness(0.88);
   transform: scale(1.05);
+  backface-visibility: hidden;
   animation: kenBurns 12s ease-in-out infinite alternate;
 }
 

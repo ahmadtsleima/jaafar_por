@@ -38,6 +38,7 @@ const mapRange = (value, inMin, inMax, outMin, outMax) => {
 const zoomImages = [];
 const portfolioItems = [];
 const motionItems = [];
+let cachedHeroSrc = "";
 
 const motionVideoSlots = {
   Brands: "motion_brands",
@@ -303,13 +304,50 @@ function Header({ headerRef, isMenuOpen, setIsMenuOpen, activeSection }) {
 
 function Hero({ onImageError }) {
   const heroRef = useRef(null);
-  const [heroSrc, setHeroSrc] = useState("");
+  const [heroSrc, setHeroSrc] = useState(() => cachedHeroSrc || sessionStorage.getItem("hero_background_src") || "");
+  const [heroLoaded, setHeroLoaded] = useState(Boolean(cachedHeroSrc || sessionStorage.getItem("hero_background_src")));
 
   useEffect(() => {
-    fetch("/api/photos?slot=hero_background")
+    let isMounted = true;
+
+    const useHeroSource = (src) => {
+      if (!src) return;
+
+      cachedHeroSrc = src;
+      sessionStorage.setItem("hero_background_src", src);
+
+      const image = new Image();
+      image.decoding = "async";
+      image.src = src;
+
+      const commit = () => {
+        if (!isMounted) return;
+        setHeroSrc(src);
+        setHeroLoaded(true);
+      };
+
+      if (image.complete) {
+        commit();
+      } else if (image.decode) {
+        image.decode().then(commit).catch(commit);
+      } else {
+        image.onload = commit;
+        image.onerror = commit;
+      }
+    };
+
+    if (heroSrc) useHeroSource(heroSrc);
+
+    fetch("/api/photos?slot=hero_background", { cache: "force-cache" })
       .then((r) => r.json())
-      .then((data) => { if (Array.isArray(data) && data[0]?.url) setHeroSrc(data[0].url); })
+      .then((data) => {
+        if (Array.isArray(data) && data[0]?.url) useHeroSource(data[0].url);
+      })
       .catch(() => {});
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   useEffect(() => {
@@ -352,11 +390,14 @@ function Hero({ onImageError }) {
   return (
     <section className="hero" aria-labelledby="hero-title" ref={heroRef}>
       <div className="grain-overlay" aria-hidden="true" />
-      <div className={`hero-media${heroSrc ? "" : " hero-media-empty"}`} aria-hidden="true">
+      <div className={`hero-media${heroSrc ? "" : " hero-media-empty"}${heroLoaded ? " is-loaded" : ""}`} aria-hidden="true">
         {heroSrc ? (
           <img
             src={heroSrc}
             alt=""
+            loading="eager"
+            fetchPriority="high"
+            decoding="async"
             onError={onImageError}
           />
         ) : (
