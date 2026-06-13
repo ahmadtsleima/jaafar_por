@@ -6,6 +6,7 @@ import path from "path";
 import authRouter from "./routes/auth.js";
 import photosRouter from "./routes/photos.js";
 import videosRouter from "./routes/videos.js";
+import { UPLOADS_DIR } from "./config/uploads.js";
 
 dotenv.config();
 
@@ -21,6 +22,10 @@ app.use(
 );
 
 app.use(express.json());
+app.use("/uploads", express.static(UPLOADS_DIR, {
+  immutable: true,
+  maxAge: "30d",
+}));
 
 app.get("/api/health", (_req, res) => res.json({ status: "ok", ts: Date.now() }));
 

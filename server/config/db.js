@@ -1,18 +1,21 @@
 import Database from "better-sqlite3";
-import { fileURLToPath } from "url";
 import path from "path";
-import fs from "fs";
+import { fileURLToPath } from "url";
+import { ensureUploadsDir } from "./uploads.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-// Ensure uploads directory exists
-const uploadsDir = path.join(__dirname, "..", "uploads");
-if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
+ensureUploadsDir();
 
 const db = new Database(path.join(__dirname, "..", "db.sqlite"));
 
 db.pragma("journal_mode = WAL");
 db.pragma("foreign_keys = ON");
+
+function ensureLegacyStorageColumns() {
+  try { db.exec("ALTER TABLE photos ADD COLUMN r2_key TEXT"); } catch (_) {}
+  try { db.exec("ALTER TABLE videos ADD COLUMN r2_key TEXT"); } catch (_) {}
+}
 
 db.exec(`
   CREATE TABLE IF NOT EXISTS photos (
@@ -45,9 +48,8 @@ db.exec(`
   );
 `);
 
-// Add r2_key column if it doesn't exist yet (idempotent migration)
-try { db.exec("ALTER TABLE photos ADD COLUMN r2_key TEXT"); } catch (_) {}
-try { db.exec("ALTER TABLE videos ADD COLUMN r2_key TEXT"); } catch (_) {}
+// Keep this legacy column so old rows can map to local /uploads paths.
+ensureLegacyStorageColumns();
 
 const photosSchema = db
   .prepare("SELECT sql FROM sqlite_master WHERE type = 'table' AND name = 'photos'")
@@ -86,6 +88,8 @@ if (photosSchema.includes("'events'") && !photosSchema.includes("'commercial'"))
     COMMIT;
     PRAGMA foreign_keys = ON;
   `);
+
+  ensureLegacyStorageColumns();
 }
 
 export default db;

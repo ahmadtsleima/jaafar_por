@@ -2,11 +2,9 @@
 import multer from "multer";
 import crypto from "crypto";
 import path from "path";
-import { PutObjectCommand, DeleteObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3";
-import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { requireAuth } from "../middleware/auth.js";
 import db from "../config/db.js";
-import { r2, R2_BUCKET, SIGNED_URL_EXPIRES } from "../config/r2.js";
+import { deleteUploadFile, mediaUrlFromRow, saveUploadFile } from "../config/uploads.js";
 
 const router = Router();
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 500 * 1024 * 1024 } });
@@ -15,21 +13,10 @@ const videoUpload = upload.fields([
   { name: "files", maxCount: 30 },
 ]);
 
-// --- Presigned URL helpers ---------------------------------------------------
+// --- Local upload URL helpers ------------------------------------------------
 
-async function presign(key) {
-  return getSignedUrl(r2, new GetObjectCommand({ Bucket: R2_BUCKET, Key: key }), { expiresIn: SIGNED_URL_EXPIRES });
-}
-
-async function enrichUrl(row) {
-  if (!row) return row;
-  if (row.r2_key) row.url = await presign(row.r2_key);
-  return row;
-}
-
-async function enrichAll(rows) {
-  return Promise.all(rows.map(enrichUrl));
-}
+const enrichUrl = (row) => mediaUrlFromRow(row);
+const enrichAll = (rows) => rows.map(enrichUrl);
 
 // --- Public ------------------------------------------------------------------
 
@@ -43,13 +30,13 @@ router.get("/videos", async (req, res) => {
     const rows = db.prepare(
       `SELECT id, slot, url, r2_key, duration_seconds, fps, resolution_width, resolution_height, uploaded_at FROM videos WHERE slot = ?${visibilityClause} ORDER BY uploaded_at DESC`
     ).all(slot);
-    return res.json(await enrichAll(rows));
+    return res.json(enrichAll(rows));
   }
 
   const row = db.prepare(
     `SELECT id, slot, url, r2_key, duration_seconds, fps, resolution_width, resolution_height, uploaded_at FROM videos WHERE slot = ?${visibilityClause} ORDER BY uploaded_at DESC LIMIT 1`
   ).get(slot);
-  return res.json(row ? await enrichUrl(row) : null);
+  return res.json(row ? enrichUrl(row) : null);
 });
 
 // --- Admin -------------------------------------------------------------------
@@ -58,32 +45,39 @@ router.get("/videos", async (req, res) => {
 router.get("/admin/videos", requireAuth, async (req, res) => {
   const slot = req.query.slot || "scroll_scrub";
   const rows = db.prepare("SELECT * FROM videos WHERE slot = ? ORDER BY uploaded_at DESC").all(slot);
-  return res.json(await enrichAll(rows));
+  return res.json(enrichAll(rows));
 });
 
 // POST /api/admin/videos  (multipart: file/files + slot)
 router.post("/admin/videos", requireAuth, videoUpload, async (req, res) => {
   const slot = req.body.slot || "scroll_scrub";
   const files = [...(req.files?.files || []), ...(req.files?.file || [])];
-  if (files.length === 0) return res.status(400).json({ error: "No file provided" });
   const isMotionSlot = String(slot).startsWith("motion_");
 
-  const videos = await Promise.all(files.map(async (file) => {
-    const id    = crypto.randomUUID();
-    const ext   = path.extname(file.originalname).toLowerCase() || ".mp4";
-    const r2Key = `videos/${id}${ext}`;
+  if (req.body.vimeo_id) {
+    const vimeoId = String(req.body.vimeo_id).match(/^\d+$/)?.[0];
+    if (!vimeoId) return res.status(400).json({ error: "Invalid Vimeo ID" });
 
-    // Upload buffer directly to Cloudflare R2
-    await r2.send(new PutObjectCommand({
-      Bucket:      R2_BUCKET,
-      Key:         r2Key,
-      Body:        file.buffer,
-      ContentType: file.mimetype,
-    }));
-
+    const id = crypto.randomUUID();
+    const url = `https://player.vimeo.com/video/${vimeoId}`;
     db.prepare(
       "INSERT INTO videos (id, slot, url, r2_key, published, is_staged) VALUES (?, ?, ?, ?, ?, ?)"
-    ).run(id, slot, r2Key, r2Key, isMotionSlot ? 1 : 0, isMotionSlot ? 0 : 1);
+    ).run(id, slot, url, `vimeo:${vimeoId}`, isMotionSlot ? 1 : 0, isMotionSlot ? 0 : 1);
+
+    const video = db.prepare("SELECT * FROM videos WHERE id = ?").get(id);
+    return res.status(201).json({ video, videos: [video], validations: null });
+  }
+
+  if (files.length === 0) return res.status(400).json({ error: "No file provided" });
+
+  const videos = await Promise.all(files.map(async (file) => {
+    const id = crypto.randomUUID();
+    const ext = path.extname(file.originalname).toLowerCase() || ".mp4";
+    const saved = await saveUploadFile("videos", id, ext, ".mp4", file.buffer);
+
+    db.prepare(
+      "INSERT INTO videos (id, slot, url, file_path, r2_key, published, is_staged) VALUES (?, ?, ?, ?, ?, ?, ?)"
+    ).run(id, slot, saved.url, saved.filePath, null, isMotionSlot ? 1 : 0, isMotionSlot ? 0 : 1);
 
     return db.prepare("SELECT * FROM videos WHERE id = ?").get(id);
   }));
@@ -95,7 +89,7 @@ router.post("/admin/videos", requireAuth, videoUpload, async (req, res) => {
     resolution: { pass: true, label: "Resolution (requires ffprobe to verify)" },
   };
 
-  const enrichedVideos = await enrichAll(videos);
+  const enrichedVideos = enrichAll(videos);
   return res.status(201).json({ video: enrichedVideos[0], videos: enrichedVideos, validations });
 });
 
@@ -113,23 +107,23 @@ router.patch("/admin/videos/:id/publish", requireAuth, async (req, res) => {
   })();
 
   const updated = db.prepare("SELECT * FROM videos WHERE id = ?").get(id);
-  return res.json(await enrichUrl(updated));
+  return res.json(enrichUrl(updated));
 });
 
 // DELETE /api/admin/videos/:id
 router.delete("/admin/videos/:id", requireAuth, async (req, res) => {
   const { id } = req.params;
-  const row = db.prepare("SELECT r2_key FROM videos WHERE id = ?").get(id);
+  const row = db.prepare("SELECT file_path, r2_key FROM videos WHERE id = ?").get(id);
   if (!row) return res.status(404).json({ error: "Video not found" });
 
   db.prepare("DELETE FROM videos WHERE id = ?").run(id);
 
-  if (row.r2_key) {
-    try {
-      await r2.send(new DeleteObjectCommand({ Bucket: R2_BUCKET, Key: row.r2_key }));
-    } catch (err) {
-      console.error("[R2] delete video error:", err?.message);
+  try {
+    if (!String(row.r2_key || "").startsWith("vimeo:")) {
+      await deleteUploadFile(row.file_path || row.r2_key);
     }
+  } catch (err) {
+    console.error("[uploads] delete video error:", err?.message);
   }
 
   return res.json({ success: true });

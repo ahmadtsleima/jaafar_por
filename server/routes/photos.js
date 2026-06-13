@@ -2,31 +2,18 @@
 import multer from "multer";
 import crypto from "crypto";
 import path from "path";
-import { PutObjectCommand, DeleteObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3";
-import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import sizeOf from "image-size";
 import { requireAuth } from "../middleware/auth.js";
 import db from "../config/db.js";
-import { r2, R2_BUCKET, SIGNED_URL_EXPIRES } from "../config/r2.js";
+import { deleteUploadFile, mediaUrlFromRow, saveUploadFile } from "../config/uploads.js";
 
 const router = Router();
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 20 * 1024 * 1024 } });
 
-// --- Presigned URL helpers ---------------------------------------------------
+// --- Local upload URL helpers ------------------------------------------------
 
-async function presign(key) {
-  return getSignedUrl(r2, new GetObjectCommand({ Bucket: R2_BUCKET, Key: key }), { expiresIn: SIGNED_URL_EXPIRES });
-}
-
-async function enrichUrl(row) {
-  if (!row) return row;
-  if (row.r2_key) row.url = await presign(row.r2_key);
-  return row;
-}
-
-async function enrichAll(rows) {
-  return Promise.all(rows.map(enrichUrl));
-}
+const enrichUrl = (row) => mediaUrlFromRow(row);
+const enrichAll = (rows) => rows.map(enrichUrl);
 
 // --- Public ------------------------------------------------------------------
 
@@ -38,7 +25,7 @@ router.get("/photos", async (req, res) => {
   if (category) { sql += " AND category = ?"; params.push(category); }
   if (slot)     { sql += " AND slot = ?";     params.push(slot); }
   sql += " ORDER BY sort_order ASC, uploaded_at DESC";
-  return res.json(await enrichAll(db.prepare(sql).all(...params)));
+  return res.json(enrichAll(db.prepare(sql).all(...params)));
 });
 
 // --- Admin -------------------------------------------------------------------
@@ -57,7 +44,7 @@ router.get("/admin/photos", requireAuth, async (req, res) => {
     }
   }
   sql += " ORDER BY sort_order ASC, uploaded_at DESC";
-  return res.json(await enrichAll(db.prepare(sql).all(...params)));
+  return res.json(enrichAll(db.prepare(sql).all(...params)));
 });
 
 // GET /api/admin/stats
@@ -86,22 +73,9 @@ router.post("/admin/photos", requireAuth, upload.single("file"), async (req, res
   if (!alt_text) return res.status(400).json({ error: "alt_text is required" });
   if (!slot)     return res.status(400).json({ error: "slot is required" });
 
-  const id    = crypto.randomUUID();
-  const ext   = path.extname(req.file.originalname).toLowerCase() || ".jpg";
-  const r2Key = `photos/${id}${ext}`;
-
-  // Upload buffer directly to Cloudflare R2
-  try {
-    await r2.send(new PutObjectCommand({
-      Bucket:      R2_BUCKET,
-      Key:         r2Key,
-      Body:        req.file.buffer,
-      ContentType: req.file.mimetype,
-    }));
-  } catch (r2Err) {
-    console.error("[R2] upload error:", r2Err);
-    return res.status(500).json({ error: "R2 upload failed: " + (r2Err?.message || "check R2 credentials in Railway Variables") });
-  }
+  const id  = crypto.randomUUID();
+  const ext = path.extname(req.file.originalname).toLowerCase() || ".jpg";
+  const saved = await saveUploadFile("photos", id, ext, ".jpg", req.file.buffer);
 
   let width = 0, height = 0;
   try {
@@ -111,16 +85,16 @@ router.post("/admin/photos", requireAuth, upload.single("file"), async (req, res
   } catch (_) { /* non-fatal */ }
 
   db.prepare(
-    `INSERT INTO photos (id, slot, category, title, alt_text, url, r2_key, width, height, sort_order, published)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+    `INSERT INTO photos (id, slot, category, title, alt_text, url, file_path, r2_key, width, height, sort_order, published)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
   ).run(
     id, slot, category || null, title || null, alt_text,
-    r2Key, r2Key, width, height,
+    saved.url, saved.filePath, null, width, height,
     parseInt(sort_order) || 0, published !== "false" ? 1 : 0
   );
 
   const row = db.prepare("SELECT * FROM photos WHERE id = ?").get(id);
-  return res.status(201).json(await enrichUrl(row));
+  return res.status(201).json(enrichUrl(row));
 });
 
 // PATCH /api/admin/photos/reorder  -- must be before /:id
@@ -154,23 +128,21 @@ router.patch("/admin/photos/:id", requireAuth, async (req, res) => {
   const info = db.prepare(`UPDATE photos SET ${sets.join(", ")} WHERE id = ?`).run(...params);
   if (info.changes === 0) return res.status(404).json({ error: "Photo not found" });
   const row = db.prepare("SELECT * FROM photos WHERE id = ?").get(id);
-  return res.json(await enrichUrl(row));
+  return res.json(enrichUrl(row));
 });
 
 // DELETE /api/admin/photos/:id
 router.delete("/admin/photos/:id", requireAuth, async (req, res) => {
   const { id } = req.params;
-  const row = db.prepare("SELECT r2_key FROM photos WHERE id = ?").get(id);
+  const row = db.prepare("SELECT file_path, r2_key FROM photos WHERE id = ?").get(id);
   if (!row) return res.status(404).json({ error: "Photo not found" });
 
   db.prepare("DELETE FROM photos WHERE id = ?").run(id);
 
-  if (row.r2_key) {
-    try {
-      await r2.send(new DeleteObjectCommand({ Bucket: R2_BUCKET, Key: row.r2_key }));
-    } catch (err) {
-      console.error("[R2] delete photo error:", err?.message);
-    }
+  try {
+    await deleteUploadFile(row.file_path || row.r2_key);
+  } catch (err) {
+    console.error("[uploads] delete photo error:", err?.message);
   }
 
   return res.json({ success: true, id });
