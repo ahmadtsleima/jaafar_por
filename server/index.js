@@ -8,9 +8,9 @@ import photosRouter from "./routes/photos.js";
 import videosRouter from "./routes/videos.js";
 import { UPLOADS_DIR } from "./config/uploads.js";
 
-dotenv.config();
-
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+dotenv.config({ path: path.join(__dirname, ".env") });
+
 const app = express();
 const PORT = process.env.PORT || 3001;
 

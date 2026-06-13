@@ -15,6 +15,10 @@ router.post("/admin/login", async (req, res) => {
   const plainPassword = process.env.ADMIN_PASSWORD;
   const hash = process.env.ADMIN_PASSWORD_HASH;
 
+  if (!process.env.JWT_SECRET) {
+    return res.status(500).json({ error: "Server misconfigured - set JWT_SECRET" });
+  }
+
   if (!plainPassword && !hash) {
     return res.status(500).json({ error: "Server misconfigured — set ADMIN_PASSWORD or ADMIN_PASSWORD_HASH" });
   }
