@@ -105,10 +105,8 @@
   align-items: center;
   justify-content: space-between;
   padding: 18px 28px;
-  background: linear-gradient(90deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+  background: #08121a;
   border-bottom: 1px solid rgba(255,255,255,0.03);
-  position: sticky;
-  top: 0;
   z-index: 10;
 }
 

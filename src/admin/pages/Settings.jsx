@@ -125,10 +125,10 @@ const VIDEO_SLOT_ROWS = [
 
 const SLOT_ROWS = [
   { slot: "hero_background",     size: "1920 × 1080", ratio: "16:9",   notes: "Full-bleed hero. Subject center-right. Top 80px clear." },
-  { slot: "gallery_featured",    size: "1200 × 1600", ratio: "3:4",    notes: "Large portrait, spans 2 rows." },
-  { slot: "gallery_landscape",   size: "1200 × 800",  ratio: "3:2",    notes: "Brand/event wide shots." },
-  { slot: "gallery_portrait",    size: "800 × 1100",  ratio: "8:11",   notes: "Fashion close-ups or model shots." },
-  { slot: "gallery_square",      size: "900 × 900",   ratio: "1:1",    notes: "Product detail, texture, brand object." },
+  { slot: "gallery_featured",    size: "1080 × 1350", ratio: "4:5",    notes: "Selected Frames image." },
+  { slot: "gallery_landscape",   size: "1080 × 1350", ratio: "4:5",    notes: "Selected Frames image." },
+  { slot: "gallery_portrait",    size: "1080 × 1350", ratio: "4:5",    notes: "Selected Frames image." },
+  { slot: "gallery_square",      size: "1080 × 1350", ratio: "4:5",    notes: "Selected Frames image." },
   { slot: "about_portrait",      size: "800 × 1000",  ratio: "4:5",    notes: "Jaafar's photo. Face in upper 60%." },
   { slot: "services_bg_brands",  size: "1400 × 900",  ratio: "14:9",   notes: "Brands card hover image." },
   { slot: "services_bg_fashion", size: "1400 × 900",  ratio: "14:9",   notes: "Fashion card hover image." },

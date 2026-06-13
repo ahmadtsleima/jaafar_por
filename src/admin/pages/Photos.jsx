@@ -2,10 +2,20 @@ import { useEffect, useState, useCallback } from "react";
 import { api } from "../api.js";
 import UploadZone from "../components/UploadZone.jsx";
 import PhotoGrid from "../components/PhotoGrid.jsx";
+import { SLOTS } from "../data/slots.js";
 
 // ─── Slot groups — each section only sees its own slots ──────────────────────
 
 const SECTION_GROUPS = [
+  {
+    id: "all",
+    label: "All Sections",
+    kicker: "Every image slot",
+    icon: "*",
+    description: "Upload or manage any image slot from one place.",
+    slots: SLOTS.map((slot) => slot.id),
+    filterKey: "all",
+  },
   {
     id: "gallery",
     label: "Selected Frames",
@@ -55,6 +65,7 @@ const SECTION_GROUPS = [
 
 // Which DB slot names belong to each filterKey
 const SLOT_PREFIX_MAP = {
+  all:      () => true,
   gallery:  (slot) => slot.startsWith("gallery_"),
   hero:     (slot) => slot === "hero_background",
   compare:  (slot) => slot.startsWith("compare_"),
@@ -63,7 +74,7 @@ const SLOT_PREFIX_MAP = {
 };
 
 export default function Photos() {
-  const [openSection, setOpenSection] = useState("gallery");
+  const [openSection, setOpenSection] = useState("all");
   const [showUpload, setShowUpload] = useState(false);
   const [photos, setPhotos] = useState([]);
   const [loading, setLoading] = useState(false);

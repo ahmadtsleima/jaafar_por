@@ -1,8 +1,8 @@
 export const SLOTS = [
-  { id: "gallery_featured",    label: "Gallery — featured",        width: 1200, height: 1600, notes: "Large portrait in the Selected Frames portfolio grid." },
-  { id: "gallery_landscape",   label: "Gallery — landscape",       width: 1200, height: 800,  notes: "Wide shot for brands or events in the portfolio grid." },
-  { id: "gallery_portrait",    label: "Gallery — portrait",        width: 800,  height: 1100, notes: "Fashion close-ups or model shots in the portfolio grid." },
-  { id: "gallery_square",      label: "Gallery — square",          width: 900,  height: 900,  notes: "Product detail or brand object in the portfolio grid." },
+  { id: "gallery_featured",    label: "Gallery - featured",        width: 1080, height: 1350, notes: "Selected Frames image. Upload at 1080x1350." },
+  { id: "gallery_landscape",   label: "Gallery - landscape",       width: 1080, height: 1350, notes: "Selected Frames image. Upload at 1080x1350." },
+  { id: "gallery_portrait",    label: "Gallery - portrait",        width: 1080, height: 1350, notes: "Selected Frames image. Upload at 1080x1350." },
+  { id: "gallery_square",      label: "Gallery - square",          width: 1080, height: 1350, notes: "Selected Frames image. Upload at 1080x1350." },
   { id: "compare_before",      label: "Color Film - before",      width: 1400, height: 1000, notes: "Before image for the drag comparison section. Match the after image sort order." },
   { id: "compare_after",       label: "Color Film - after",       width: 1400, height: 1000, notes: "After/final image for the drag comparison section. Match the before image sort order." },
   { id: "sticky_zoom",         label: "Sticky zoom display",       width: 1200, height: 800,  notes: "Scroll-animated image stack section (up to 10 images)." },
