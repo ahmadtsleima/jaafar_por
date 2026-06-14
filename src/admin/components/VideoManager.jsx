@@ -36,7 +36,9 @@ export default function VideoManager({ slot, label, notes }) {
   const [vimeoInput, setVimeoInput] = useState("");
   const [vimeoId, setVimeoId] = useState(null);
   const inputRef = useRef(null);
+  const autoPublishSlots = new Set(["filmmaking", "color_grading_video", "lighting_featured", "services_reel", "reel_showcase"]);
   const isMotionSlot = slot.startsWith("motion_") || slot === "reel_showcase";
+  const autoPublishes = isMotionSlot || autoPublishSlots.has(slot);
   // scroll_scrub needs direct <video> frame control — Vimeo iframe can't do that
   const vimeoAllowed = slot !== "scroll_scrub";
   const liveCount = videos.filter((video) => video.published).length;
@@ -62,11 +64,6 @@ export default function VideoManager({ slot, label, notes }) {
 
     const totalSize = files.reduce((sum, f) => sum + f.size, 0);
     const totalMB = (totalSize / (1024 * 1024)).toFixed(1);
-    if (totalMB > 200) {
-      setError(`Total size (${totalMB} MB) exceeds recommended limit. Try splitting into smaller files.`);
-      return;
-    }
-
     setUploading(true);
     setUploadProgress(0);
     setValidations(null);
@@ -81,11 +78,11 @@ export default function VideoManager({ slot, label, notes }) {
       const result = await api.videos.upload(fd, (pct) => setUploadProgress(pct));
       setUploadProgress(100);
       setValidations(result.validations);
-      setMessage(`✓ ${files.length} video${files.length === 1 ? "" : "s"} uploaded${isMotionSlot ? " and published" : " as staged"}.`);
+      setMessage(`✓ ${files.length} video${files.length === 1 ? "" : "s"} uploaded${autoPublishes ? " and published" : " as staged"}.`);
       fetchVideos();
       setTimeout(() => setUploadProgress(0), 1000);
     } catch (err) {
-      setError(`Upload failed: ${err.message}. For large videos (>100 MB), try one at a time.`);
+      setError(`Upload failed: ${err.message}. If this is a very large file, set Nginx client_max_body_size on the server and try one at a time.`);
     } finally {
       setUploading(false);
     }
@@ -102,7 +99,7 @@ export default function VideoManager({ slot, label, notes }) {
       fd.append("vimeo_id", id);
       fd.append("slot", slot);
       await api.videos.upload(fd, () => {});
-      setMessage(`✓ Vimeo video added${isMotionSlot ? " and published" : " as staged"}.`);
+      setMessage(`✓ Vimeo video added${autoPublishes ? " and published" : " as staged"}.`);
       setVimeoInput("");
       setVimeoId(null);
       fetchVideos();
@@ -212,7 +209,7 @@ export default function VideoManager({ slot, label, notes }) {
                 <span className="adm-video-upload-icon">{uploading ? "⦘" : "+"}</span>
                 <strong>{uploading ? `Uploading ${Math.round(uploadProgress)}%` : "Add video"}</strong>
                 <p>{isMotionSlot ? "Drop multiple project videos here." : "Drop the replacement video here."}</p>
-                <small>{isMotionSlot ? "Auto-publishes to the landing carousel." : "Upload stays staged until you publish it."}</small>
+                <small>{autoPublishes ? "Uploads live to this portfolio section." : "Upload stays staged until you publish it."}</small>
                 {uploading && (
                   <div className="adm-video-progress-container">
                     <div className="adm-video-progress-bar">
@@ -342,3 +339,5 @@ function VideoCard({ video, isMotionSlot, onPublish, onRemove }) {
     </article>
   );
 }
+
+

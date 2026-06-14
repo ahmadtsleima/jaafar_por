@@ -25,6 +25,20 @@ const categoryFromSlot = (slot) => {
   return "brands";
 };
 
+const IMAGE_EXTENSIONS = new Set(["jpg", "jpeg", "png", "webp", "gif", "avif", "heic", "heif", "tif", "tiff"]);
+
+const isImageFile = (file) => {
+  const ext = file.name.split(".").pop()?.toLowerCase();
+  return file.type.startsWith("image/") || IMAGE_EXTENSIONS.has(ext);
+};
+
+const textFromFilename = (filename) =>
+  filename
+    .replace(/\.[^.]+$/, "")
+    .replace(/[-_]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+
 // allowedSlots: string[] - if provided, only these slot IDs appear in the dropdown
 export default function UploadZone({ onUploaded, allowedSlots = null }) {
   const [files, setFiles] = useState([]);
@@ -79,7 +93,7 @@ export default function UploadZone({ onUploaded, allowedSlots = null }) {
     });
 
   const acceptFiles = async (fileList) => {
-    const imageFiles = Array.from(fileList || []).filter((file) => file.type.startsWith("image/"));
+    const imageFiles = Array.from(fileList || []).filter(isImageFile);
     if (imageFiles.length === 0) return;
 
     setFiles(imageFiles);
@@ -132,8 +146,9 @@ export default function UploadZone({ onUploaded, allowedSlots = null }) {
       for (let index = 0; index < files.length; index += 1) {
         const file = files[index];
         const fd = new FormData();
+        const baseText = altText.trim() || title.trim() || textFromFilename(file.name) || "Portfolio image";
         const numberedTitle = title && files.length > 1 ? `${title} ${index + 1}` : title;
-        const numberedAlt = files.length > 1 ? `${altText} ${index + 1}` : altText;
+        const numberedAlt = files.length > 1 ? `${baseText} ${index + 1}` : baseText;
 
         fd.append("file", file);
         fd.append("slot", slot);
@@ -228,9 +243,8 @@ export default function UploadZone({ onUploaded, allowedSlots = null }) {
             <input
               type="text"
               value={altText}
-              required
               onChange={(event) => setAltText(event.target.value)}
-              placeholder={selectedCount > 1 ? "Base alt text, number added automatically" : ""}
+              placeholder={selectedCount > 1 ? "Optional - filename used if empty" : "Optional - filename used if empty"}
             />
           </label>
 
@@ -297,7 +311,7 @@ export default function UploadZone({ onUploaded, allowedSlots = null }) {
         <button
           className="adm-btn adm-btn-primary"
           type="submit"
-          disabled={files.length === 0 || !altText || uploading}
+          disabled={files.length === 0 || uploading}
         >
           {uploading
             ? `Uploading ${Math.round(uploadProgress)}%...`

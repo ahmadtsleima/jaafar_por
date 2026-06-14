@@ -7,7 +7,7 @@ import db from "../config/db.js";
 import { deleteUploadFile, mediaUrlFromRow, saveUploadFile } from "../config/uploads.js";
 
 const router = Router();
-const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 500 * 1024 * 1024 } });
+const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 2 * 1024 * 1024 * 1024 } });
 const videoUpload = upload.fields([
   { name: "file",  maxCount: 1  },
   { name: "files", maxCount: 30 },
@@ -52,7 +52,8 @@ router.get("/admin/videos", requireAuth, async (req, res) => {
 router.post("/admin/videos", requireAuth, videoUpload, async (req, res) => {
   const slot = req.body.slot || "scroll_scrub";
   const files = [...(req.files?.files || []), ...(req.files?.file || [])];
-  const isMotionSlot = String(slot).startsWith("motion_");
+  const multiLiveSlot = String(slot).startsWith("motion_") || slot === "reel_showcase";
+  const autoPublishSlot = multiLiveSlot || ["filmmaking", "color_grading_video", "lighting_featured", "services_reel"].includes(slot);
 
   if (req.body.vimeo_id) {
     const vimeoId = String(req.body.vimeo_id).match(/^\d+$/)?.[0];
@@ -60,15 +61,24 @@ router.post("/admin/videos", requireAuth, videoUpload, async (req, res) => {
 
     const id = crypto.randomUUID();
     const url = `https://player.vimeo.com/video/${vimeoId}`;
-    db.prepare(
-      "INSERT INTO videos (id, slot, url, r2_key, published, is_staged) VALUES (?, ?, ?, ?, ?, ?)"
-    ).run(id, slot, url, `vimeo:${vimeoId}`, isMotionSlot ? 1 : 0, isMotionSlot ? 0 : 1);
+    db.transaction(() => {
+      if (autoPublishSlot && !multiLiveSlot) {
+        db.prepare("UPDATE videos SET published = 0 WHERE slot = ? AND published = 1").run(slot);
+      }
+      db.prepare(
+        "INSERT INTO videos (id, slot, url, r2_key, published, is_staged) VALUES (?, ?, ?, ?, ?, ?)"
+      ).run(id, slot, url, `vimeo:${vimeoId}`, autoPublishSlot ? 1 : 0, autoPublishSlot ? 0 : 1);
+    })();
 
     const video = db.prepare("SELECT * FROM videos WHERE id = ?").get(id);
     return res.status(201).json({ video, videos: [video], validations: null });
   }
 
   if (files.length === 0) return res.status(400).json({ error: "No file provided" });
+
+  if (autoPublishSlot && !multiLiveSlot) {
+    db.prepare("UPDATE videos SET published = 0 WHERE slot = ? AND published = 1").run(slot);
+  }
 
   const videos = await Promise.all(files.map(async (file) => {
     const id = crypto.randomUUID();
@@ -77,7 +87,7 @@ router.post("/admin/videos", requireAuth, videoUpload, async (req, res) => {
 
     db.prepare(
       "INSERT INTO videos (id, slot, url, file_path, r2_key, published, is_staged) VALUES (?, ?, ?, ?, ?, ?, ?)"
-    ).run(id, slot, saved.url, saved.filePath, null, isMotionSlot ? 1 : 0, isMotionSlot ? 0 : 1);
+    ).run(id, slot, saved.url, saved.filePath, null, autoPublishSlot ? 1 : 0, autoPublishSlot ? 0 : 1);
 
     return db.prepare("SELECT * FROM videos WHERE id = ?").get(id);
   }));
@@ -100,7 +110,8 @@ router.patch("/admin/videos/:id/publish", requireAuth, async (req, res) => {
   if (!row) return res.status(404).json({ error: "Video not found" });
 
   db.transaction(() => {
-    if (!String(row.slot).startsWith("motion_")) {
+    const multiLiveSlot = String(row.slot).startsWith("motion_") || row.slot === "reel_showcase";
+    if (!multiLiveSlot) {
       db.prepare("UPDATE videos SET published = 0 WHERE slot = ? AND published = 1").run(row.slot);
     }
     db.prepare("UPDATE videos SET published = 1, is_staged = 0 WHERE id = ?").run(id);
