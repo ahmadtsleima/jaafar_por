@@ -8662,15 +8662,25 @@ main#top {
 
 .grading-sequence {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  align-items: start;
   gap: clamp(22px, 4vw, 54px);
-  max-width: 1180px;
+  max-width: 900px;
   margin: 0 auto;
 }
 
+.grading-compare-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
+  gap: clamp(18px, 3vw, 34px);
+}
+
+.grading-video-row {
+  display: grid;
+  place-items: center;
+}
+
 .cinema-color .compare-widget {
-  width: min(100%, 390px);
+  width: min(100%, 410px);
   min-height: auto;
   aspect-ratio: 9 / 16;
   justify-self: center;
@@ -8681,7 +8691,7 @@ main#top {
 }
 
 .cinema-color .cinema-video-card {
-  width: min(100%, 390px);
+  width: min(100%, 430px);
   justify-self: center;
 }
 
@@ -8699,7 +8709,7 @@ main#top {
 }
 
 .cinema-color .cinema-empty-panel {
-  width: min(100%, 390px);
+  width: min(100%, 410px);
   min-height: auto;
   aspect-ratio: 9 / 16;
   justify-self: center;
@@ -8709,12 +8719,20 @@ main#top {
   color: #f5f4f0;
 }
 
+.photo-carousel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  max-width: 1380px;
+  margin: 0 auto clamp(24px, 4vw, 46px);
+}
+
 .photo-category-tabs {
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
-  max-width: 1380px;
-  margin: 0 auto clamp(24px, 4vw, 46px);
+  margin: 0;
 }
 
 .photo-category-tabs button {
@@ -8736,41 +8754,118 @@ main#top {
   color: #f5f4f0;
 }
 
-.photo-masonry {
-  columns: 4 230px;
-  column-gap: clamp(12px, 2vw, 22px);
+.photo-carousel-controls {
+  display: inline-flex;
+  gap: 8px;
+  flex: 0 0 auto;
+}
+
+.photo-carousel-controls button {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 1px solid rgba(245, 244, 240, 0.16);
+  border-radius: 999px;
+  background: rgba(245, 244, 240, 0.05);
+  color: #f5f4f0;
+  font: 900 18px/1 var(--font-ui);
+  cursor: pointer;
+  transition: transform 180ms ease, border-color 180ms ease, background 180ms ease;
+}
+
+.photo-carousel-controls button:hover {
+  border-color: rgba(201, 169, 110, 0.7);
+  background: rgba(201, 169, 110, 0.13);
+  transform: translateY(-2px);
+}
+
+.photo-carousel-shell {
+  position: relative;
   max-width: 1380px;
   margin: 0 auto;
 }
 
-.photo-masonry-item {
-  display: block;
-  width: 100%;
-  margin: 0 0 clamp(12px, 2vw, 22px);
+.photo-card-track {
+  display: flex;
+  gap: clamp(14px, 2vw, 28px);
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x mandatory;
+  scroll-padding-inline: clamp(4px, 1vw, 10px);
+  padding: 4px 4px 22px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(201, 169, 110, 0.55) rgba(245, 244, 240, 0.08);
+}
+
+.photo-card-track::-webkit-scrollbar {
+  height: 8px;
+}
+
+.photo-card-track::-webkit-scrollbar-track {
+  background: rgba(245, 244, 240, 0.08);
+  border-radius: 999px;
+}
+
+.photo-card-track::-webkit-scrollbar-thumb {
+  background: rgba(201, 169, 110, 0.55);
+  border-radius: 999px;
+}
+
+.photo-carousel-card {
+  position: relative;
+  flex: 0 0 clamp(240px, 28vw, 380px);
+  aspect-ratio: 4 / 5;
   padding: 0;
   overflow: hidden;
   border: 1px solid rgba(245, 244, 240, 0.12);
   border-radius: 8px;
-  background: rgba(245, 244, 240, 0.04);
-  break-inside: avoid;
+  background: #0d0d0d;
+  box-shadow: 0 28px 80px rgba(0, 0, 0, 0.36);
+  scroll-snap-align: start;
+  cursor: pointer;
+  isolation: isolate;
 }
 
-.photo-masonry-item img {
+.photo-carousel-card::after {
+  content: "";
+  position: absolute;
+  inset: auto 0 0;
+  z-index: 1;
+  height: 42%;
+  background: linear-gradient(180deg, transparent, rgba(0, 0, 0, 0.78));
+  pointer-events: none;
+}
+
+.photo-carousel-card img {
+  display: block;
   width: 100%;
-  min-height: 220px;
+  height: 100%;
   object-fit: cover;
   transition: transform 520ms ease, filter 520ms ease;
 }
 
-.photo-masonry-item:hover img {
+.photo-carousel-card:hover img {
   filter: brightness(1.08);
   transform: scale(1.045);
 }
 
-.photo-masonry-item span,
+.photo-carousel-card span {
+  position: absolute;
+  left: 18px;
+  right: 18px;
+  bottom: 16px;
+  z-index: 2;
+  color: #f5f4f0;
+  font: 850 13px/1.25 var(--font-ui);
+  text-align: left;
+}
+
+.photo-carousel-card > span:only-child,
 .lighting-card span {
   display: grid;
   place-items: center;
+  inset: 0;
   min-height: 260px;
   padding: 20px;
   color: rgba(245, 244, 240, 0.42);
@@ -8904,7 +8999,8 @@ main#top {
     aspect-ratio: 16 / 10;
   }
 
-  .grading-sequence {
+  .grading-sequence,
+  .grading-compare-row {
     grid-template-columns: 1fr;
     max-width: 430px;
   }

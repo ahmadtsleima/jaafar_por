@@ -639,19 +639,23 @@ function ColorGradingPortfolio({ onImageError }) {
         Drag through the frame and feel the tone shift from neutral capture to finished cinematic image.
       </SectionHeading>
       <div className="grading-sequence">
-        {items[0] ? (
-          <CompareWidget item={items[0]} onImageError={onImageError} />
-        ) : (
-          <div className="cinema-empty-panel">Add compare_before and compare_after images in admin.</div>
-        )}
-        <CinematicVideo video={videos[0]} vertical featured label="Cinematic grade film" />
-        {items[1] ? (
-          <CompareWidget item={items[1]} onImageError={onImageError} />
-        ) : items[0] ? (
-          <CompareWidget item={items[0]} onImageError={onImageError} />
-        ) : (
-          <div className="cinema-empty-panel">Add a second before/after pair to complete the sequence.</div>
-        )}
+        <div className="grading-compare-row">
+          {items[0] ? (
+            <CompareWidget item={items[0]} onImageError={onImageError} />
+          ) : (
+            <div className="cinema-empty-panel">Add compare_before and compare_after images in admin.</div>
+          )}
+          {items[1] ? (
+            <CompareWidget item={items[1]} onImageError={onImageError} />
+          ) : items[0] ? (
+            <CompareWidget item={items[0]} onImageError={onImageError} />
+          ) : (
+            <div className="cinema-empty-panel">Add a second before/after pair to complete the sequence.</div>
+          )}
+        </div>
+        <div className="grading-video-row">
+          <CinematicVideo video={videos[0]} vertical featured label="Cinematic grade film" />
+        </div>
       </div>
     </section>
   );
@@ -674,6 +678,7 @@ function PhotographyPortfolio({ onImageError }) {
   const photos = usePhotos();
   const [activeCategory, setActiveCategory] = useState(photoCategoryLabels[0]);
   const [lightboxPhoto, setLightboxPhoto] = useState(null);
+  const photoTrackRef = useRef(null);
 
   const galleryPhotos = useMemo(
     () => photos.filter((photo) => String(photo.slot || "").startsWith("gallery_") || String(photo.slot || "").startsWith("photo_")),
@@ -689,39 +694,62 @@ function PhotographyPortfolio({ onImageError }) {
   }, [galleryPhotos]);
 
   const visiblePhotos = grouped[activeCategory]?.length ? grouped[activeCategory] : galleryPhotos;
+  const carouselPhotos = (visiblePhotos.length ? visiblePhotos : Array.from({ length: 8 })).slice(0, 16);
+
+  useEffect(() => {
+    photoTrackRef.current?.scrollTo({ left: 0, behavior: "smooth" });
+  }, [activeCategory]);
+
+  const scrollPhotoTrack = (direction) => {
+    const track = photoTrackRef.current;
+    if (!track) return;
+    const distance = Math.min(track.clientWidth * 0.86, 520);
+    track.scrollBy({ left: direction * distance, behavior: "smooth" });
+  };
 
   return (
     <section className="cinema-section cinema-photo" id="photography">
       <SectionHeading kicker="Still image archive" title="Photography">
         Premium image studies across food, commercial, jewelry, and product work.
       </SectionHeading>
-      <div className="photo-category-tabs" aria-label="Photography categories">
-        {photoCategoryLabels.map((label) => (
-          <button
-            key={label}
-            type="button"
-            className={activeCategory === label ? "is-active" : ""}
-            onClick={() => setActiveCategory(label)}
-          >
-            {label}
-          </button>
-        ))}
+      <div className="photo-carousel-head">
+        <div className="photo-category-tabs" aria-label="Photography categories">
+          {photoCategoryLabels.map((label) => (
+            <button
+              key={label}
+              type="button"
+              className={activeCategory === label ? "is-active" : ""}
+              onClick={() => setActiveCategory(label)}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+        <div className="photo-carousel-controls" aria-label="Photography carousel controls">
+          <button type="button" onClick={() => scrollPhotoTrack(-1)} aria-label="Previous photos">&lt;</button>
+          <button type="button" onClick={() => scrollPhotoTrack(1)} aria-label="Next photos">&gt;</button>
+        </div>
       </div>
-      <div className="photo-masonry">
-        {(visiblePhotos.length ? visiblePhotos : Array.from({ length: 8 })).slice(0, 16).map((photo, index) => (
+      <div className="photo-carousel-shell">
+        <div className="photo-card-track" ref={photoTrackRef}>
+          {carouselPhotos.map((photo, index) => (
           <button
             key={photo?.id || `photo-placeholder-${index}`}
-            className="photo-masonry-item"
+            className="photo-carousel-card"
             type="button"
             onClick={() => photo?.url && setLightboxPhoto(photo)}
           >
             {photo?.url ? (
-              <img src={photo.url} alt={photo.alt_text || ""} loading="lazy" onError={onImageError} />
+              <>
+                <img src={photo.url} alt={photo.alt_text || ""} loading="lazy" onError={onImageError} />
+                <span>{photo.title || photo.alt_text || activeCategory}</span>
+              </>
             ) : (
               <span>Add gallery photo</span>
             )}
           </button>
-        ))}
+          ))}
+        </div>
       </div>
       {lightboxPhoto && createPortal(
         <div className="photo-lightbox" role="dialog" aria-modal="true" aria-label="Photography preview">
