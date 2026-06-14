@@ -79,8 +79,8 @@ export const api = {
   photos: {
     list: (category) =>
       apiFetch(`/admin/photos${category ? `?category=${category}` : ""}`),
-    upload: (formData) =>
-      apiFetch("/admin/photos", { method: "POST", body: formData }),
+    upload: (formData, onProgress) =>
+      uploadWithProgress("/admin/photos", formData, onProgress ?? (() => {})),
     update: (id, data) =>
       apiFetch(`/admin/photos/${id}`, { method: "PATCH", body: JSON.stringify(data) }),
     remove: (id) =>

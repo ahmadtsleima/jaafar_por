@@ -39,6 +39,64 @@ const textFromFilename = (filename) =>
     .replace(/\s+/g, " ")
     .trim();
 
+const loadImage = (file) =>
+  new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      resolve(img);
+    };
+
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      reject(new Error("Could not read image"));
+    };
+
+    img.src = url;
+  });
+
+const canvasToBlob = (canvas, type, quality) =>
+  new Promise((resolve) => canvas.toBlob(resolve, type, quality));
+
+const optimizePhotographyImage = async (file, slotSpec, slot) => {
+  if (!slot.startsWith("photo_")) return file;
+  if (file.type === "image/gif") return file;
+
+  const targetWidth = slotSpec?.width || 1080;
+  const targetHeight = slotSpec?.height || 1350;
+
+  try {
+    const img = await loadImage(file);
+    const canvas = document.createElement("canvas");
+    canvas.width = targetWidth;
+    canvas.height = targetHeight;
+
+    const ctx = canvas.getContext("2d", { alpha: false });
+    if (!ctx) return file;
+
+    ctx.fillStyle = "#050505";
+    ctx.fillRect(0, 0, targetWidth, targetHeight);
+
+    const scale = Math.max(targetWidth / img.naturalWidth, targetHeight / img.naturalHeight);
+    const sourceWidth = targetWidth / scale;
+    const sourceHeight = targetHeight / scale;
+    const sourceX = Math.max((img.naturalWidth - sourceWidth) / 2, 0);
+    const sourceY = Math.max((img.naturalHeight - sourceHeight) / 2, 0);
+
+    ctx.drawImage(img, sourceX, sourceY, sourceWidth, sourceHeight, 0, 0, targetWidth, targetHeight);
+
+    const blob = await canvasToBlob(canvas, "image/jpeg", 0.86);
+    if (!blob) return file;
+
+    const baseName = file.name.replace(/\.[^.]+$/, "") || "photography";
+    return new File([blob], `${baseName}.jpg`, { type: "image/jpeg", lastModified: Date.now() });
+  } catch {
+    return file;
+  }
+};
+
 // allowedSlots: string[] - if provided, only these slot IDs appear in the dropdown
 export default function UploadZone({ onUploaded, allowedSlots = null }) {
   const [files, setFiles] = useState([]);
@@ -149,8 +207,15 @@ export default function UploadZone({ onUploaded, allowedSlots = null }) {
         const baseText = altText.trim() || title.trim() || textFromFilename(file.name) || "Portfolio image";
         const numberedTitle = title && files.length > 1 ? `${title} ${index + 1}` : title;
         const numberedAlt = files.length > 1 ? `${baseText} ${index + 1}` : baseText;
+        const startProgress = (index / files.length) * 100;
 
-        fd.append("file", file);
+        setUploadStatus(`Preparing ${index + 1} of ${files.length}: ${file.name}`);
+        setUploadProgress(Math.round(startProgress));
+        const uploadFile = await optimizePhotographyImage(file, slotSpec, slot);
+        const savedMB = Math.max(file.size - uploadFile.size, 0) / 1024 / 1024;
+        const uploadName = uploadFile.name || file.name;
+
+        fd.append("file", uploadFile);
         fd.append("slot", slot);
         if (!isCompareSlot) fd.append("category", category);
         fd.append("title", numberedTitle);
@@ -158,9 +223,15 @@ export default function UploadZone({ onUploaded, allowedSlots = null }) {
         fd.append("sort_order", String(sortOrder + index));
         fd.append("published", String(publishNow));
 
-        setUploadStatus(`Uploading ${index + 1} of ${files.length}: ${file.name}`);
-        await api.photos.upload(fd);
-        setUploadProgress(Math.round(((index + 1) / files.length) * 100));
+        setUploadStatus(
+          savedMB > 0.05
+            ? `Uploading ${index + 1} of ${files.length}: ${uploadName} (${savedMB.toFixed(1)} MB optimized)`
+            : `Uploading ${index + 1} of ${files.length}: ${uploadName}`,
+        );
+        await api.photos.upload(fd, (pct) => {
+          const nextProgress = ((index + pct / 100) / files.length) * 100;
+          setUploadProgress(Math.round(nextProgress));
+        });
       }
 
       setUploadStatus(`Uploaded ${files.length} photo${files.length === 1 ? "" : "s"}`);
@@ -238,8 +309,8 @@ export default function UploadZone({ onUploaded, allowedSlots = null }) {
             <SlotSelector value={slot} onChange={setSlot} allowedSlots={availableSlots} />
           </label>
 
-          <label className="adm-field">
-            <span>Alt text <em>(required)</em></span>
+        <label className="adm-field">
+            <span>Alt text <em>(optional)</em></span>
             <input
               type="text"
               value={altText}
