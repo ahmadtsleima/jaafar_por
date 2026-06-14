@@ -644,7 +644,7 @@ function ColorGradingPortfolio({ onImageError }) {
         ) : (
           <div className="cinema-empty-panel">Add compare_before and compare_after images in admin.</div>
         )}
-        <CinematicVideo video={videos[0]} featured label="Cinematic grade film" />
+        <CinematicVideo video={videos[0]} vertical featured label="Cinematic grade film" />
         {items[1] ? (
           <CompareWidget item={items[1]} onImageError={onImageError} />
         ) : items[0] ? (

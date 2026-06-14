@@ -393,6 +393,11 @@
   background: #fffcf5;
 }
 .adm-dropzone-icon { font-size: 28px; }
+.adm-dropzone small {
+  display: block;
+  color: #aaa;
+  font-size: 12px;
+}
 .adm-dropzone-preview {
   max-width: 100%;
   max-height: 220px;
