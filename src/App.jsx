@@ -824,9 +824,9 @@ function BTSSection({ onImageError }) {
       <SectionHeading kicker="Behind the scenes" title="BTS">
         A closer look at the setups, camera-side moments, and production details behind the final frame.
       </SectionHeading>
-      <CinematicVideo video={videos[0]} featured label="Featured BTS film" />
+      <CinematicVideo video={videos[0]} featured label="Lighting Techniques" />
       <div className="lighting-gallery">
-        {(lightingPhotos.length ? lightingPhotos : Array.from({ length: 6 })).slice(0, 10).map((photo, index) => (
+        {(lightingPhotos.length ? lightingPhotos : Array.from({ length: 3 })).slice(0, 3).map((photo, index) => (
           <figure key={photo?.id || `lighting-placeholder-${index}`} className="lighting-card">
             {photo?.url ? (
               <img src={photo.url} alt={photo.alt_text || ""} loading="lazy" onError={onImageError} />
