@@ -93,7 +93,7 @@ function App() {
         }
       }
 
-      const navSections = ["top", "work", "motion", "services", "about"];
+      const navSections = ["top", "motion-design", "filmmaking", "color-grading", "photography", "lighting"];
       const currentSection =
         [...navSections].reverse().find((sectionId) => {
           const section = document.getElementById(sectionId);
@@ -231,16 +231,12 @@ function App() {
 
       <main id="top">
         <Hero onImageError={handleImageError} />
-        <IntroBand />
-        <SelectedFrames onImageError={handleImageError} />
-        <CompareSection onImageError={handleImageError} />
-        <ReelShowcase />
-        <VideoProjects />
-        <Services onImageError={handleImageError} />
-        {/* <CreativeDirection /> */}
-        <About onImageError={handleImageError} />
+        <MotionDesignSection />
+        <FilmmakingSection />
+        <ColorGradingPortfolio onImageError={handleImageError} />
+        <PhotographyPortfolio onImageError={handleImageError} />
+        <LightingTechniquesSection onImageError={handleImageError} />
         <MiniFooter />
-        {/* <Contact /> */}
       </main>
 
     </>
@@ -276,10 +272,11 @@ function Header({ headerRef, isMenuOpen, setIsMenuOpen, activeSection }) {
 
         <nav className="desktop-nav" aria-label="Desktop navigation">
           <a className="nav-link" href="#top" aria-current={activeSection === "top" ? "page" : undefined}>Home</a>
-          <a className="nav-link" href="#work" aria-current={activeSection === "work" ? "page" : undefined}>Work</a>
-          <a className="nav-link" href="#motion" aria-current={activeSection === "motion" ? "page" : undefined}>Videos</a>
-          <a className="nav-link" href="#services" aria-current={activeSection === "services" ? "page" : undefined}>Services</a>
-          <a className="nav-link" href="#about" aria-current={activeSection === "about" ? "page" : undefined}>About</a>
+          <a className="nav-link" href="#motion-design" aria-current={activeSection === "motion-design" ? "page" : undefined}>Motion</a>
+          <a className="nav-link" href="#filmmaking" aria-current={activeSection === "filmmaking" ? "page" : undefined}>Films</a>
+          <a className="nav-link" href="#color-grading" aria-current={activeSection === "color-grading" ? "page" : undefined}>Color</a>
+          <a className="nav-link" href="#photography" aria-current={activeSection === "photography" ? "page" : undefined}>Photo</a>
+          <a className="nav-link" href="#lighting" aria-current={activeSection === "lighting" ? "page" : undefined}>Lighting</a>
         </nav>
 
         <div className="nav-actions">
@@ -292,10 +289,11 @@ function Header({ headerRef, isMenuOpen, setIsMenuOpen, activeSection }) {
         <div className="mobile-menu-inner">
           <span className="mobile-menu-kicker">Menu</span>
           <a href="#top" onClick={closeMenu}>Home</a>
-          <a href="#work" onClick={closeMenu}>Work</a>
-          <a href="#motion" onClick={closeMenu}>Videos</a>
-          <a href="#services" onClick={closeMenu}>Services</a>
-          <a href="#about" onClick={closeMenu}>About</a>
+          <a href="#motion-design" onClick={closeMenu}>Motion</a>
+          <a href="#filmmaking" onClick={closeMenu}>Films</a>
+          <a href="#color-grading" onClick={closeMenu}>Color</a>
+          <a href="#photography" onClick={closeMenu}>Photo</a>
+          <a href="#lighting" onClick={closeMenu}>Lighting</a>
         </div>
       </nav>
     </header>
@@ -338,10 +336,19 @@ function Hero({ onImageError }) {
 
     if (heroSrc) useHeroSource(heroSrc);
 
-    fetch("/api/photos?slot=hero_background", { cache: "force-cache" })
+    fetch("/api/photos?slot=hero_background", { cache: "no-store" })
       .then((r) => r.json())
       .then((data) => {
-        if (Array.isArray(data) && data[0]?.url) useHeroSource(data[0].url);
+        if (Array.isArray(data) && data[0]?.url) {
+          useHeroSource(data[0].url);
+        } else {
+          cachedHeroSrc = "";
+          sessionStorage.removeItem("hero_background_src");
+          if (isMounted) {
+            setHeroSrc("");
+            setHeroLoaded(false);
+          }
+        }
       })
       .catch(() => {});
 
@@ -429,6 +436,333 @@ function Hero({ onImageError }) {
         <span>Events &amp; Culture</span>
       </aside>
       <div className="scroll-indicator" aria-hidden="true" />
+    </section>
+  );
+}
+
+const motionDesignSlots = ["motion_design", "motion_brands", "motion_commercial", "motion_fashion"];
+const filmmakingSlots = ["filmmaking", "motion_filmmaking", "reel_showcase"];
+const photoCategoryLabels = [
+  "Food & Beverage",
+  "Commercial Photography",
+  "Jewelry Photography",
+  "Product Photography",
+];
+
+const fetchJson = (url) =>
+  fetch(url, { cache: "no-store" })
+    .then((response) => (response.ok ? response.json() : null))
+    .catch(() => null);
+
+function useVideosFromSlots(slots) {
+  const [videos, setVideos] = useState([]);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    Promise.all(slots.map((slot) => fetchJson(`/api/videos?slot=${slot}&all=1`)))
+      .then((results) => {
+        if (!isMounted) return;
+        const nextVideos = results.flatMap((items, slotIndex) =>
+          (Array.isArray(items) ? items : []).map((item, itemIndex) => ({
+            ...item,
+            slot: slots[slotIndex],
+            title: item.title || `${slots[slotIndex].replaceAll("_", " ")} ${itemIndex + 1}`,
+          })),
+        );
+        setVideos(nextVideos);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [slots.join("|")]);
+
+  return videos;
+}
+
+function usePhotos() {
+  const [photos, setPhotos] = useState([]);
+
+  useEffect(() => {
+    let isMounted = true;
+    fetchJson("/api/photos").then((items) => {
+      if (isMounted) setPhotos(Array.isArray(items) ? items : []);
+    });
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  return photos;
+}
+
+function SectionHeading({ kicker, title, children }) {
+  return (
+    <div className="cinema-heading">
+      <p>{kicker}</p>
+      <h2>{title}</h2>
+      {children && <span>{children}</span>}
+    </div>
+  );
+}
+
+function CinematicVideo({ video, vertical = false, featured = false, label }) {
+  const videoRef = useRef(null);
+  const src = video?.url || video?.src || "";
+
+  const play = () => videoRef.current?.play?.().catch(() => {});
+  const pause = () => {
+    if (!videoRef.current) return;
+    videoRef.current.pause();
+    try { videoRef.current.currentTime = 0; } catch { /* metadata may not be ready */ }
+  };
+
+  return (
+    <article className={`cinema-video-card${vertical ? " is-vertical" : ""}${featured ? " is-featured" : ""}`}>
+      <div className="cinema-video-frame">
+        {src ? (
+          isVimeoUrl(src) ? (
+            <iframe
+              src={vimeoSrc(src, { background: true })}
+              title={video?.title || label || "Portfolio video"}
+              loading="lazy"
+              allow="autoplay; fullscreen; picture-in-picture"
+              allowFullScreen
+            />
+          ) : (
+            <video
+              ref={videoRef}
+              src={src}
+              muted
+              loop
+              playsInline
+              preload={featured ? "auto" : "metadata"}
+              onPointerEnter={play}
+              onPointerLeave={pause}
+              onFocus={play}
+              onBlur={pause}
+            />
+          )
+        ) : (
+          <div className="cinema-empty-media">Add video in admin</div>
+        )}
+        <span className="cinema-play-pulse" aria-hidden="true" />
+      </div>
+      <div className="cinema-video-meta">
+        <span>{label || video?.slot?.replaceAll("_", " ") || "Film"}</span>
+        <strong>{video?.title || "Untitled study"}</strong>
+      </div>
+    </article>
+  );
+}
+
+function MotionDesignSection() {
+  const videos = useVideosFromSlots(motionDesignSlots);
+
+  return (
+    <section className="cinema-section cinema-motion" id="motion-design">
+      <SectionHeading kicker="Vertical reels / 1080x1920" title="Motion Design">
+        Designed for thumb-stopping vertical rhythm, kinetic cuts, and high-retention brand motion.
+      </SectionHeading>
+      <div className="motion-reel-grid">
+        {(videos.length ? videos : Array.from({ length: 4 })).slice(0, 8).map((video, index) => (
+          <CinematicVideo
+            key={video?.id || `motion-placeholder-${index}`}
+            video={video}
+            vertical
+            label={`Motion ${String(index + 1).padStart(2, "0")}`}
+          />
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function FilmmakingSection() {
+  const videos = useVideosFromSlots(filmmakingSlots);
+
+  return (
+    <section className="cinema-section cinema-filmmaking" id="filmmaking">
+      <SectionHeading kicker="Narrative / campaign / editorial" title="Filmmaking">
+        Full-width cinematic work built around pacing, atmosphere, and visual storytelling.
+      </SectionHeading>
+      <div className="film-strip">
+        {(videos.length ? videos : Array.from({ length: 3 })).slice(0, 5).map((video, index) => (
+          <CinematicVideo
+            key={video?.id || `film-placeholder-${index}`}
+            video={video}
+            featured={index === 0}
+            label={`Scene ${String(index + 1).padStart(2, "0")}`}
+          />
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function ColorGradingPortfolio({ onImageError }) {
+  const [items, setItems] = useState([]);
+  const videos = useVideosFromSlots(["color_grading_video", "services_reel", "reel_showcase"]);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    Promise.all([
+      fetchJson("/api/photos?slot=color_before"),
+      fetchJson("/api/photos?slot=compare_before"),
+      fetchJson("/api/photos?slot=color_after"),
+      fetchJson("/api/photos?slot=compare_after"),
+    ]).then(([colorBefore, compareBefore, colorAfter, compareAfter]) => {
+      if (!isMounted) return;
+      const beforePhotos = [...(Array.isArray(colorBefore) ? colorBefore : []), ...(Array.isArray(compareBefore) ? compareBefore : [])];
+      const afterPhotos = [...(Array.isArray(colorAfter) ? colorAfter : []), ...(Array.isArray(compareAfter) ? compareAfter : [])];
+      const pairCount = Math.min(beforePhotos.length, afterPhotos.length);
+      const nextItems = Array.from({ length: pairCount }, (_, index) => ({
+        before: beforePhotos[index].url,
+        after: afterPhotos[index].url,
+        title: afterPhotos[index].title || beforePhotos[index].title || `Grade ${index + 1}`,
+        label: "Original / Final grade",
+      }));
+      setItems(nextItems);
+    });
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  return (
+    <section className="cinema-section cinema-color" id="color-grading">
+      <SectionHeading kicker="Before / after / final grade" title="Color Grading">
+        Drag through the frame and feel the tone shift from neutral capture to finished cinematic image.
+      </SectionHeading>
+      <div className="grading-sequence">
+        {items[0] ? (
+          <CompareWidget item={items[0]} onImageError={onImageError} />
+        ) : (
+          <div className="cinema-empty-panel">Add compare_before and compare_after images in admin.</div>
+        )}
+        <CinematicVideo video={videos[0]} featured label="Cinematic grade film" />
+        {items[1] ? (
+          <CompareWidget item={items[1]} onImageError={onImageError} />
+        ) : items[0] ? (
+          <CompareWidget item={items[0]} onImageError={onImageError} />
+        ) : (
+          <div className="cinema-empty-panel">Add a second before/after pair to complete the sequence.</div>
+        )}
+      </div>
+    </section>
+  );
+}
+
+function categorizePhoto(photo, index) {
+  if (photo?.slot === "photo_fnb") return "Food & Beverage";
+  if (photo?.slot === "photo_commercial") return "Commercial Photography";
+  if (photo?.slot === "photo_jewelry") return "Jewelry Photography";
+  if (photo?.slot === "photo_product") return "Product Photography";
+  const text = `${photo?.title || ""} ${photo?.alt_text || ""} ${photo?.category || ""}`.toLowerCase();
+  if (/food|beverage|drink|coffee|restaurant|f&b|fnb/.test(text)) return "Food & Beverage";
+  if (/jewel|jewelry|ring|diamond|gold|silver|watch/.test(text)) return "Jewelry Photography";
+  if (/product|pack|bottle|object|item/.test(text)) return "Product Photography";
+  if (/commercial|brand|campaign|advert/.test(text)) return "Commercial Photography";
+  return photoCategoryLabels[index % photoCategoryLabels.length];
+}
+
+function PhotographyPortfolio({ onImageError }) {
+  const photos = usePhotos();
+  const [activeCategory, setActiveCategory] = useState(photoCategoryLabels[0]);
+  const [lightboxPhoto, setLightboxPhoto] = useState(null);
+
+  const galleryPhotos = useMemo(
+    () => photos.filter((photo) => String(photo.slot || "").startsWith("gallery_") || String(photo.slot || "").startsWith("photo_")),
+    [photos],
+  );
+
+  const grouped = useMemo(() => {
+    const next = Object.fromEntries(photoCategoryLabels.map((label) => [label, []]));
+    galleryPhotos.forEach((photo, index) => {
+      next[categorizePhoto(photo, index)].push(photo);
+    });
+    return next;
+  }, [galleryPhotos]);
+
+  const visiblePhotos = grouped[activeCategory]?.length ? grouped[activeCategory] : galleryPhotos;
+
+  return (
+    <section className="cinema-section cinema-photo" id="photography">
+      <SectionHeading kicker="Still image archive" title="Photography">
+        Premium image studies across food, commercial, jewelry, and product work.
+      </SectionHeading>
+      <div className="photo-category-tabs" aria-label="Photography categories">
+        {photoCategoryLabels.map((label) => (
+          <button
+            key={label}
+            type="button"
+            className={activeCategory === label ? "is-active" : ""}
+            onClick={() => setActiveCategory(label)}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+      <div className="photo-masonry">
+        {(visiblePhotos.length ? visiblePhotos : Array.from({ length: 8 })).slice(0, 16).map((photo, index) => (
+          <button
+            key={photo?.id || `photo-placeholder-${index}`}
+            className="photo-masonry-item"
+            type="button"
+            onClick={() => photo?.url && setLightboxPhoto(photo)}
+          >
+            {photo?.url ? (
+              <img src={photo.url} alt={photo.alt_text || ""} loading="lazy" onError={onImageError} />
+            ) : (
+              <span>Add gallery photo</span>
+            )}
+          </button>
+        ))}
+      </div>
+      {lightboxPhoto && createPortal(
+        <div className="photo-lightbox" role="dialog" aria-modal="true" aria-label="Photography preview">
+          <button type="button" className="photo-lightbox-backdrop" onClick={() => setLightboxPhoto(null)} aria-label="Close preview" />
+          <figure>
+            <button type="button" onClick={() => setLightboxPhoto(null)} aria-label="Close preview">Close</button>
+            <img src={lightboxPhoto.url} alt={lightboxPhoto.alt_text || ""} />
+            <figcaption>{lightboxPhoto.title || lightboxPhoto.alt_text || activeCategory}</figcaption>
+          </figure>
+        </div>,
+        document.body,
+      )}
+    </section>
+  );
+}
+
+function LightingTechniquesSection({ onImageError }) {
+  const videos = useVideosFromSlots(["lighting_featured", "services_reel", "reel_showcase"]);
+  const photos = usePhotos();
+  const lightingPhotos = photos.filter((photo) =>
+    ["lighting_setup", "services_bg_brands", "services_bg_fashion", "services_bg_events", "sticky_zoom"].includes(photo.slot),
+  );
+
+  return (
+    <section className="cinema-section cinema-lighting" id="lighting">
+      <SectionHeading kicker="Set craft / light logic" title="Lighting Techniques">
+        A practical look at how contrast, falloff, and motivated sources shape the final frame.
+      </SectionHeading>
+      <CinematicVideo video={videos[0]} featured label="Featured lighting study" />
+      <div className="lighting-gallery">
+        {(lightingPhotos.length ? lightingPhotos : Array.from({ length: 6 })).slice(0, 10).map((photo, index) => (
+          <figure key={photo?.id || `lighting-placeholder-${index}`} className="lighting-card">
+            {photo?.url ? (
+              <img src={photo.url} alt={photo.alt_text || ""} loading="lazy" onError={onImageError} />
+            ) : (
+              <span>Add lighting setup photo</span>
+            )}
+            <figcaption>{photo?.title || `Lighting setup ${String(index + 1).padStart(2, "0")}`}</figcaption>
+          </figure>
+        ))}
+      </div>
     </section>
   );
 }

@@ -8,8 +8,6 @@ export default function Settings() {
 
   return (
     <div className="adm-settings-page">
-
-      {/* ── Hero ── */}
       <div className="adm-settings-hero">
         <p className="adm-settings-kicker">Configuration</p>
         <h1 className="adm-settings-title">Settings</h1>
@@ -18,10 +16,9 @@ export default function Settings() {
         </p>
       </div>
 
-      {/* ── Image specs ── */}
       <div className="adm-settings-card">
         <div className="adm-settings-card-head">
-          <div className="adm-settings-card-icon">⊞</div>
+          <div className="adm-settings-card-icon">IMG</div>
           <div>
             <h2 className="adm-settings-card-title">Image Slot Specifications</h2>
             <p className="adm-settings-card-note">
@@ -53,14 +50,13 @@ export default function Settings() {
         </div>
       </div>
 
-      {/* ── Video specs ── */}
       <div className="adm-settings-card">
         <div className="adm-settings-card-head">
-          <div className="adm-settings-card-icon">▶</div>
+          <div className="adm-settings-card-icon">VID</div>
           <div>
             <h2 className="adm-settings-card-title">Video Slot Specifications</h2>
             <p className="adm-settings-card-note">
-              Recommended export settings per slot. Stay under the size limit for fast uploads.
+              Recommended export settings per slot. Uploads are stored on your server.
             </p>
           </div>
         </div>
@@ -92,10 +88,9 @@ export default function Settings() {
         </div>
       </div>
 
-      {/* ── Session ── */}
       <div className="adm-settings-card adm-settings-card-session">
         <div className="adm-settings-card-head">
-          <div className="adm-settings-card-icon adm-settings-card-icon-danger">⏻</div>
+          <div className="adm-settings-card-icon adm-settings-card-icon-danger">OFF</div>
           <div>
             <h2 className="adm-settings-card-title">Session</h2>
             <p className="adm-settings-card-note">
@@ -109,30 +104,42 @@ export default function Settings() {
           </button>
         </div>
       </div>
-
     </div>
   );
 }
 
 const VIDEO_SLOT_ROWS = [
-  { slot: "scroll_scrub",      resolution: "1920 × 1080", format: "MP4 (H.264)",        maxSize: "150 MB", fps: "24–30", notes: "Stop-motion frame sequence. Smooth scrub needs high frame count." },
-  { slot: "motion_brands",     resolution: "1920 × 1080", format: "MP4 (H.264)",        maxSize: "200 MB", fps: "24–60", notes: "Brand project reels. Multiple videos allowed per slot." },
-  { slot: "motion_filmmaking", resolution: "1920 × 1080", format: "MP4 (H.264)",        maxSize: "200 MB", fps: "24–60", notes: "Filmmaking reels. Compress to H.264 before uploading." },
-  { slot: "motion_commercial", resolution: "1920 × 1080", format: "MP4 (H.264)",        maxSize: "200 MB", fps: "24–60", notes: "Commercial reels. Aim for < 100 MB for faster load." },
-  { slot: "motion_fashion",    resolution: "1920 × 1080", format: "MP4 (H.264)",        maxSize: "200 MB", fps: "24–60", notes: "Fashion reels. Vertical (9:16) also accepted." },
-  { slot: "services_reel",     resolution: "1920 × 1080", format: "MP4 (H.264) / WebM", maxSize: "80 MB",  fps: "24–30", notes: "Ambient looping background. Keep short (10–30 s) and muted." },
+  { slot: "motion_design",       resolution: "1080 x 1920", format: "MP4 (H.264)",        maxSize: "No limit", fps: "24-60", notes: "Vertical reels for the Motion Design section." },
+  { slot: "filmmaking",          resolution: "1920 x 1080", format: "MP4 (H.264)",        maxSize: "No limit", fps: "24-60", notes: "Large horizontal cinematic cards." },
+  { slot: "color_grading_video", resolution: "1920 x 1080", format: "MP4 (H.264) / WebM", maxSize: "No limit", fps: "24-30", notes: "Video placed between before/after slider sets." },
+  { slot: "lighting_featured",   resolution: "1920 x 1080", format: "MP4 (H.264) / WebM", maxSize: "No limit", fps: "24-30", notes: "Featured video at the top of Lighting Techniques." },
+  { slot: "reel_showcase",       resolution: "1920 x 1080", format: "MP4 (H.264)",        maxSize: "No limit", fps: "24-60", notes: "Horizontal featured reel section. Multiple videos allowed." },
+  { slot: "motion_brands",       resolution: "1920 x 1080", format: "MP4 (H.264)",        maxSize: "No limit", fps: "24-60", notes: "Brand project reels." },
+  { slot: "motion_filmmaking",   resolution: "1920 x 1080", format: "MP4 (H.264)",        maxSize: "No limit", fps: "24-60", notes: "Legacy filmmaking reel slot, still supported." },
+  { slot: "motion_commercial",   resolution: "1920 x 1080", format: "MP4 (H.264)",        maxSize: "No limit", fps: "24-60", notes: "Commercial reels." },
+  { slot: "motion_fashion",      resolution: "1080 x 1920", format: "MP4 (H.264)",        maxSize: "No limit", fps: "24-60", notes: "Fashion or vertical motion reels." },
+  { slot: "services_reel",       resolution: "1920 x 1080", format: "MP4 (H.264) / WebM", maxSize: "No limit", fps: "24-30", notes: "Ambient looping background. Keep short when possible." },
 ];
 
 const SLOT_ROWS = [
-  { slot: "hero_background",     size: "1920 × 1080", ratio: "16:9",   notes: "Full-bleed hero. Subject center-right. Top 80px clear." },
-  { slot: "gallery_featured",    size: "1080 × 1350", ratio: "4:5",    notes: "Selected Frames image." },
-  { slot: "gallery_landscape",   size: "1080 × 1350", ratio: "4:5",    notes: "Selected Frames image." },
-  { slot: "gallery_portrait",    size: "1080 × 1350", ratio: "4:5",    notes: "Selected Frames image." },
-  { slot: "gallery_square",      size: "1080 × 1350", ratio: "4:5",    notes: "Selected Frames image." },
-  { slot: "about_portrait",      size: "800 × 1000",  ratio: "4:5",    notes: "Jaafar's photo. Face in upper 60%." },
-  { slot: "services_bg_brands",  size: "1400 × 900",  ratio: "14:9",   notes: "Brands card hover image." },
-  { slot: "services_bg_fashion", size: "1400 × 900",  ratio: "14:9",   notes: "Fashion card hover image." },
-  { slot: "services_bg_events",  size: "1400 × 900",  ratio: "14:9",   notes: "Events card hover image." },
-  { slot: "three_js_plane_1–6",  size: "1200 × 800",  ratio: "3:2",    notes: "B&W / desaturated. Avoid heavy white areas." },
-  { slot: "og_image",            size: "1200 × 630",  ratio: "1.91:1", notes: "Include name lockup or strong single image." },
+  { slot: "hero_background",     size: "1920 x 1080", ratio: "16:9",   notes: "Full-bleed hero. Subject center-right. Top 80px clear." },
+  { slot: "gallery_featured",    size: "1080 x 1350", ratio: "4:5",    notes: "Selected Frames image." },
+  { slot: "gallery_landscape",   size: "1080 x 1350", ratio: "4:5",    notes: "Selected Frames image." },
+  { slot: "gallery_portrait",    size: "1080 x 1350", ratio: "4:5",    notes: "Selected Frames image." },
+  { slot: "gallery_square",      size: "1080 x 1350", ratio: "4:5",    notes: "Selected Frames image." },
+  { slot: "photo_fnb",           size: "1080 x 1350", ratio: "4:5",    notes: "Food & Beverage gallery." },
+  { slot: "photo_commercial",    size: "1080 x 1350", ratio: "4:5",    notes: "Commercial photography gallery." },
+  { slot: "photo_jewelry",       size: "1080 x 1350", ratio: "4:5",    notes: "Jewelry photography gallery." },
+  { slot: "photo_product",       size: "1080 x 1350", ratio: "4:5",    notes: "Product photography gallery." },
+  { slot: "color_before",        size: "1920 x 1080", ratio: "16:9",   notes: "Before frame for color grading sliders." },
+  { slot: "color_after",         size: "1920 x 1080", ratio: "16:9",   notes: "After/graded frame for color grading sliders." },
+  { slot: "compare_before",      size: "1400 x 1000", ratio: "7:5",    notes: "Legacy before slider image, still supported." },
+  { slot: "compare_after",       size: "1400 x 1000", ratio: "7:5",    notes: "Legacy after slider image, still supported." },
+  { slot: "lighting_setup",      size: "1600 x 1000", ratio: "8:5",    notes: "Lighting Techniques gallery photo." },
+  { slot: "about_portrait",      size: "800 x 1000",  ratio: "4:5",    notes: "Jaafar's photo. Face in upper 60%." },
+  { slot: "services_bg_brands",  size: "1400 x 900",  ratio: "14:9",   notes: "Brands card hover image." },
+  { slot: "services_bg_fashion", size: "1400 x 900",  ratio: "14:9",   notes: "Fashion card hover image." },
+  { slot: "services_bg_events",  size: "1400 x 900",  ratio: "14:9",   notes: "Events card hover image." },
+  { slot: "sticky_zoom",         size: "1200 x 800",  ratio: "3:2",    notes: "Scroll-animated image stack." },
+  { slot: "og_image",            size: "1200 x 630",  ratio: "1.91:1", notes: "Social share image." },
 ];
