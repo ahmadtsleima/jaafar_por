@@ -115,6 +115,7 @@ export default function UploadZone({ onUploaded, allowedSlots = null }) {
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadStatus, setUploadStatus] = useState("");
+  const [uploadError, setUploadError] = useState("");
   const [dragOver, setDragOver] = useState(false);
   const inputRef = useRef(null);
   const isPhotographySlot = slot.startsWith("photo_");
@@ -157,6 +158,7 @@ export default function UploadZone({ onUploaded, allowedSlots = null }) {
     setFiles(imageFiles);
     setUploadProgress(0);
     setUploadStatus("");
+    setUploadError("");
 
     const reader = new FileReader();
     reader.onload = (event) => setPreview(event.target.result);
@@ -180,6 +182,7 @@ export default function UploadZone({ onUploaded, allowedSlots = null }) {
     setSortOrder(0);
     setUploadProgress(0);
     setUploadStatus("");
+    setUploadError("");
     if (inputRef.current) inputRef.current.value = "";
   };
 
@@ -199,6 +202,7 @@ export default function UploadZone({ onUploaded, allowedSlots = null }) {
     setUploading(true);
     setUploadProgress(0);
     setUploadStatus(`Uploading 1 of ${files.length}`);
+    setUploadError("");
 
     try {
       for (let index = 0; index < files.length; index += 1) {
@@ -239,7 +243,9 @@ export default function UploadZone({ onUploaded, allowedSlots = null }) {
 
       setTimeout(resetForm, 800);
     } catch (err) {
-      alert("Upload failed: " + err.message);
+      const message = err?.message || "Unknown upload error";
+      setUploadError(message);
+      alert("Upload failed: " + message);
       setUploadStatus("");
     } finally {
       setUploading(false);
@@ -376,6 +382,12 @@ export default function UploadZone({ onUploaded, allowedSlots = null }) {
             <p className="adm-upload-progress-text">
               {uploadStatus || `${Math.round(uploadProgress)}%`}
             </p>
+          </div>
+        )}
+
+        {uploadError && (
+          <div className="adm-upload-warn">
+            Upload failed: {uploadError}
           </div>
         )}
 

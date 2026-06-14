@@ -72,34 +72,39 @@ router.get("/admin/stats", requireAuth, (req, res) => {
 
 // POST /api/admin/photos  (multipart: file + fields)
 router.post("/admin/photos", requireAuth, upload.single("file"), async (req, res) => {
-  if (!req.file) return res.status(400).json({ error: "No file provided" });
-
-  const { slot, category, title, alt_text, sort_order, published } = req.body;
-  if (!alt_text) return res.status(400).json({ error: "alt_text is required" });
-  if (!slot)     return res.status(400).json({ error: "slot is required" });
-
-  const id  = crypto.randomUUID();
-  const ext = path.extname(req.file.originalname).toLowerCase() || ".jpg";
-  const saved = await saveUploadFile("photos", id, ext, ".jpg", req.file.buffer);
-
-  let width = 0, height = 0;
   try {
-    const dims = sizeOf(req.file.buffer);
-    width  = dims.width  ?? 0;
-    height = dims.height ?? 0;
-  } catch (_) { /* non-fatal */ }
+    if (!req.file) return res.status(400).json({ error: "No file provided" });
 
-  db.prepare(
-    `INSERT INTO photos (id, slot, category, title, alt_text, url, file_path, r2_key, width, height, sort_order, published)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
-  ).run(
-    id, slot, category || null, title || null, alt_text,
-    saved.url, saved.filePath, null, width, height,
-    parseInt(sort_order) || 0, published !== "false" ? 1 : 0
-  );
+    const { slot, category, title, alt_text, sort_order, published } = req.body;
+    if (!alt_text) return res.status(400).json({ error: "alt_text is required" });
+    if (!slot)     return res.status(400).json({ error: "slot is required" });
 
-  const row = db.prepare("SELECT * FROM photos WHERE id = ?").get(id);
-  return res.status(201).json(enrichUrl(row));
+    const id  = crypto.randomUUID();
+    const ext = path.extname(req.file.originalname).toLowerCase() || ".jpg";
+    const saved = await saveUploadFile("photos", id, ext, ".jpg", req.file.buffer);
+
+    let width = 0, height = 0;
+    try {
+      const dims = sizeOf(req.file.buffer);
+      width  = dims.width  ?? 0;
+      height = dims.height ?? 0;
+    } catch (_) { /* non-fatal */ }
+
+    db.prepare(
+      `INSERT INTO photos (id, slot, category, title, alt_text, url, file_path, r2_key, width, height, sort_order, published)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+    ).run(
+      id, slot, category || null, title || null, alt_text,
+      saved.url, saved.filePath, null, width, height,
+      parseInt(sort_order) || 0, published !== "false" ? 1 : 0
+    );
+
+    const row = db.prepare("SELECT * FROM photos WHERE id = ?").get(id);
+    return res.status(201).json(enrichUrl(row));
+  } catch (err) {
+    console.error("[uploads] photo upload error:", err);
+    return res.status(500).json({ error: err?.message || "Photo upload failed" });
+  }
 });
 
 // PATCH /api/admin/photos/reorder  -- must be before /:id

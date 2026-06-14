@@ -50,22 +50,31 @@ function uploadWithProgress(path, formData, onProgress) {
     const token = getToken();
     const xhr = new XMLHttpRequest();
     xhr.open("POST", `${API_BASE}/api${path}`);
+    xhr.timeout = 120000;
     if (token) xhr.setRequestHeader("Authorization", `Bearer ${token}`);
 
     xhr.upload.addEventListener("progress", (e) => {
       if (e.lengthComputable) onProgress(Math.round((e.loaded / e.total) * 100));
     });
 
+    xhr.upload.addEventListener("load", () => onProgress(100));
+
     xhr.addEventListener("load", () => {
       if (xhr.status === 401) { clearToken(); window.location.reload(); return; }
+      const fallbackMessage = xhr.responseText?.slice(0, 240) || xhr.statusText || `HTTP ${xhr.status}`;
       try {
         const data = JSON.parse(xhr.responseText);
         if (xhr.status >= 400) reject(new Error(data.error || xhr.statusText));
         else resolve(data);
-      } catch { reject(new Error(xhr.statusText)); }
+      } catch {
+        if (xhr.status >= 400) reject(new Error(fallbackMessage));
+        else resolve({});
+      }
     });
 
     xhr.addEventListener("error", () => reject(new Error("Network error")));
+    xhr.addEventListener("timeout", () => reject(new Error("Upload timed out after 120 seconds")));
+    xhr.addEventListener("abort", () => reject(new Error("Upload cancelled")));
     xhr.send(formData);
   });
 }
