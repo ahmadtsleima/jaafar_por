@@ -14,6 +14,12 @@ const upload = multer({ storage: multer.memoryStorage() });
 
 const enrichUrl = (row) => mediaUrlFromRow(row);
 const enrichAll = (rows) => rows.map(enrichUrl);
+const LEGACY_CATEGORIES = new Set(["brands", "filmmaking", "commercial", "fashion", "events"]);
+
+function normalizeCategory(slot, category) {
+  if (String(slot || "").startsWith("photo_")) return null;
+  return LEGACY_CATEGORIES.has(category) ? category : null;
+}
 
 // --- Public ------------------------------------------------------------------
 
@@ -53,8 +59,10 @@ router.get("/admin/stats", requireAuth, (req, res) => {
   const total      = db.prepare("SELECT COUNT(*) AS n FROM photos").get().n;
   const published  = db.prepare("SELECT COUNT(*) AS n FROM photos WHERE published = 1").get().n;
   const cats       = db.prepare("SELECT category, COUNT(*) AS n FROM photos WHERE published = 1 GROUP BY category").all();
+  const slots      = db.prepare("SELECT slot, COUNT(*) AS n FROM photos WHERE published = 1 GROUP BY slot").all();
   const lastUpload = db.prepare("SELECT MAX(uploaded_at) AS last FROM photos").get().last ?? null;
   const catMap     = Object.fromEntries(cats.map((r) => [r.category, r.n]));
+  const slotMap    = Object.fromEntries(slots.map((r) => [r.slot, r.n]));
   return res.json({
     total, published,
     brands:     catMap.brands     ?? 0,
@@ -62,10 +70,10 @@ router.get("/admin/stats", requireAuth, (req, res) => {
     commercial: catMap.commercial ?? 0,
     fashion:    catMap.fashion    ?? 0,
     events:     catMap.events     ?? 0,
-    fnb:         catMap.fnb         ?? 0,
-    commercial_photography: catMap.commercial_photography ?? 0,
-    jewelry_photography:    catMap.jewelry_photography    ?? 0,
-    product_photography:    catMap.product_photography    ?? 0,
+    fnb:         slotMap.photo_fnb         ?? 0,
+    commercial_photography: slotMap.photo_commercial ?? 0,
+    jewelry_photography:    slotMap.photo_jewelry    ?? 0,
+    product_photography:    slotMap.photo_product    ?? 0,
     lastUpload,
   });
 });
@@ -94,7 +102,7 @@ router.post("/admin/photos", requireAuth, upload.single("file"), async (req, res
       `INSERT INTO photos (id, slot, category, title, alt_text, url, file_path, r2_key, width, height, sort_order, published)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
     ).run(
-      id, slot, category || null, title || null, alt_text,
+      id, slot, normalizeCategory(slot, category), title || null, alt_text,
       saved.url, saved.filePath, null, width, height,
       parseInt(sort_order) || 0, published !== "false" ? 1 : 0
     );
@@ -129,6 +137,7 @@ router.patch("/admin/photos/:id", requireAuth, async (req, res) => {
       sets.push(`${key} = ?`);
       params.push(key === "published" ? (req.body[key] ? 1 : 0)
                 : key === "sort_order" ? parseInt(req.body[key])
+                : key === "category" ? normalizeCategory(req.body.slot, req.body[key])
                 : req.body[key]);
     }
   }

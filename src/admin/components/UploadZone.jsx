@@ -221,7 +221,7 @@ export default function UploadZone({ onUploaded, allowedSlots = null }) {
 
         fd.append("file", uploadFile);
         fd.append("slot", slot);
-        if (!isCompareSlot) fd.append("category", category);
+        if (!isCompareSlot && !isPhotographySlot) fd.append("category", category);
         fd.append("title", numberedTitle);
         fd.append("alt_text", numberedAlt);
         fd.append("sort_order", String(sortOrder + index));
