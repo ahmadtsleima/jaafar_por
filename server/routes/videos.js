@@ -84,7 +84,7 @@ router.post("/admin/videos", requireAuth, videoUpload, async (req, res) => {
 
   const firstExt = path.extname(files[0].originalname).toLowerCase().slice(1);
   const validations = {
-    format:     { pass: ["mp4", "webm"].includes(firstExt), label: "MP4 or WebM format" },
+    format:     { pass: ["mp4", "webm", "mov"].includes(firstExt), label: "MP4, WebM, or MOV format" },
     duration:   { pass: true, label: "Duration (requires ffprobe to verify)" },
     resolution: { pass: true, label: "Resolution (requires ffprobe to verify)" },
   };

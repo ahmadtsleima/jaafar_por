@@ -53,9 +53,9 @@ export default function VideoManager({ slot, label, notes }) {
     const files = Array.from(fileList || []);
     if (files.length === 0) return;
 
-    const invalidFile = files.find((file) => !["mp4", "webm"].includes(file.name.split(".").pop().toLowerCase()));
+    const invalidFile = files.find((file) => !["mp4", "webm", "mov"].includes(file.name.split(".").pop().toLowerCase()));
     if (invalidFile) {
-      setError(`${invalidFile.name} is not supported. Use MP4 or WebM.`);
+      setError(`${invalidFile.name} is not supported. Use MP4, WebM, or MOV.`);
       setMessage("");
       return;
     }
@@ -224,7 +224,7 @@ export default function VideoManager({ slot, label, notes }) {
                   ref={inputRef}
                   type="file"
                   multiple={isMotionSlot}
-                  accept="video/mp4,video/webm"
+                  accept="video/mp4,video/webm,video/quicktime,.mov"
                   onChange={(event) => { upload(event.target.files); event.target.value = ""; }}
                 />
               </div>
