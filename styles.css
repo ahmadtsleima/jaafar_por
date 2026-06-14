@@ -8612,7 +8612,7 @@ main#top {
 }
 
 .cinema-video-meta {
-  display: flex;
+  display: none;
   align-items: end;
   justify-content: space-between;
   gap: 16px;
@@ -8878,6 +8878,10 @@ main#top {
   text-align: left;
 }
 
+.photo-carousel-card img + span {
+  display: none;
+}
+
 .photo-carousel-card > span:only-child,
 .lighting-card span {
   display: grid;
@@ -8931,8 +8935,7 @@ main#top {
 }
 
 .photo-lightbox figcaption {
-  color: rgba(245, 244, 240, 0.72);
-  text-align: center;
+  display: none;
 }
 
 .video-lightbox {
@@ -8982,8 +8985,7 @@ main#top {
 }
 
 .video-lightbox figcaption {
-  color: rgba(245, 244, 240, 0.72);
-  text-align: center;
+  display: none;
 }
 
 .lighting-gallery {
@@ -9018,17 +9020,7 @@ main#top {
 }
 
 .lighting-card figcaption {
-  position: absolute;
-  left: 14px;
-  right: 14px;
-  bottom: 14px;
-  padding: 10px 12px;
-  border: 1px solid rgba(245, 244, 240, 0.12);
-  border-radius: 999px;
-  background: rgba(0, 0, 0, 0.55);
-  color: #f5f4f0;
-  font-size: 12px;
-  backdrop-filter: blur(12px);
+  display: none;
 }
 
 @keyframes cinemaReveal {
