@@ -11,7 +11,7 @@ export const SLOTS = [
   { id: "compare_after",       label: "Color Film - after",         width: 1400, height: 1000, notes: "After/final image for the drag comparison section. Match the before image sort order." },
   { id: "color_before",        label: "Color Grading - before",     width: 1080, height: 1920, notes: "Vertical before image for the cinematic color grading sliders. Match sort order with color_after." },
   { id: "color_after",         label: "Color Grading - after",      width: 1080, height: 1920, notes: "Vertical after/graded image for the cinematic color grading sliders. Match sort order with color_before." },
-  { id: "lighting_setup",      label: "Lighting Techniques photo",  width: 1600, height: 1000, notes: "Lighting setup/gallery photo shown below the featured lighting video." },
+  { id: "lighting_setup",      label: "BTS photo",                  width: 1600, height: 1000, notes: "BTS setup/gallery photo shown below the featured BTS video." },
   { id: "sticky_zoom",         label: "Sticky zoom display",        width: 1200, height: 800,  notes: "Scroll-animated image stack section (up to 10 images)." },
   { id: "services_bg_brands",  label: "Services - brands card",    width: 1200, height: 900,  notes: "Background photo behind the Brand Identity Shoots service card." },
   { id: "services_bg_fashion", label: "Services - fashion card",   width: 1200, height: 900,  notes: "Background photo behind the Fashion Editorial service card." },
@@ -30,6 +30,6 @@ export const VIDEO_SLOTS = [
   { id: "motion_commercial",   label: "Motion - Commercial",       notes: "Published videos appear in the Commercial filter of Video Projects." },
   { id: "motion_fashion",      label: "Motion - Fashion",          notes: "Published videos appear in the Fashion filter of Video Projects." },
   { id: "color_grading_video", label: "Color Grading video",       notes: "Vertical 1080x1920 cinematic video placed between before/after slider sets in the Color Grading section." },
-  { id: "lighting_featured",   label: "Lighting featured video",   notes: "Large featured cinematic video at the top of the Lighting Techniques section." },
+  { id: "lighting_featured",   label: "BTS featured video",        notes: "Large featured cinematic video at the top of the BTS section." },
   { id: "services_reel",       label: "Services section reel",     notes: "Ambient looping video background in the circular gallery section." },
 ];

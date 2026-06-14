@@ -93,7 +93,7 @@ function App() {
         }
       }
 
-      const navSections = ["top", "motion-design", "filmmaking", "color-grading", "photography", "lighting"];
+      const navSections = ["top", "motion-design", "filmmaking", "color-grading", "photography", "bts"];
       const currentSection =
         [...navSections].reverse().find((sectionId) => {
           const section = document.getElementById(sectionId);
@@ -235,7 +235,7 @@ function App() {
         <FilmmakingSection />
         <ColorGradingPortfolio onImageError={handleImageError} />
         <PhotographyPortfolio onImageError={handleImageError} />
-        <LightingTechniquesSection onImageError={handleImageError} />
+        <BTSSection onImageError={handleImageError} />
         <MiniFooter />
       </main>
 
@@ -276,7 +276,7 @@ function Header({ headerRef, isMenuOpen, setIsMenuOpen, activeSection }) {
           <a className="nav-link" href="#filmmaking" aria-current={activeSection === "filmmaking" ? "page" : undefined}>Films</a>
           <a className="nav-link" href="#color-grading" aria-current={activeSection === "color-grading" ? "page" : undefined}>Color</a>
           <a className="nav-link" href="#photography" aria-current={activeSection === "photography" ? "page" : undefined}>Photo</a>
-          <a className="nav-link" href="#lighting" aria-current={activeSection === "lighting" ? "page" : undefined}>Lighting</a>
+          <a className="nav-link" href="#bts" aria-current={activeSection === "bts" ? "page" : undefined}>BTS</a>
         </nav>
 
         <div className="nav-actions">
@@ -293,7 +293,7 @@ function Header({ headerRef, isMenuOpen, setIsMenuOpen, activeSection }) {
           <a href="#filmmaking" onClick={closeMenu}>Films</a>
           <a href="#color-grading" onClick={closeMenu}>Color</a>
           <a href="#photography" onClick={closeMenu}>Photo</a>
-          <a href="#lighting" onClick={closeMenu}>Lighting</a>
+          <a href="#bts" onClick={closeMenu}>BTS</a>
         </div>
       </nav>
     </header>
@@ -812,7 +812,7 @@ function PhotographyPortfolio({ onImageError }) {
   );
 }
 
-function LightingTechniquesSection({ onImageError }) {
+function BTSSection({ onImageError }) {
   const videos = useVideosFromSlots(["lighting_featured", "services_reel", "reel_showcase"]);
   const photos = usePhotos();
   const lightingPhotos = photos.filter((photo) =>
@@ -820,20 +820,20 @@ function LightingTechniquesSection({ onImageError }) {
   );
 
   return (
-    <section className="cinema-section cinema-lighting" id="lighting">
-      <SectionHeading kicker="Set craft / light logic" title="Lighting Techniques">
-        A practical look at how contrast, falloff, and motivated sources shape the final frame.
+    <section className="cinema-section cinema-lighting" id="bts">
+      <SectionHeading kicker="Behind the scenes" title="BTS">
+        A closer look at the setups, camera-side moments, and production details behind the final frame.
       </SectionHeading>
-      <CinematicVideo video={videos[0]} featured label="Featured lighting study" />
+      <CinematicVideo video={videos[0]} featured label="Featured BTS film" />
       <div className="lighting-gallery">
         {(lightingPhotos.length ? lightingPhotos : Array.from({ length: 6 })).slice(0, 10).map((photo, index) => (
           <figure key={photo?.id || `lighting-placeholder-${index}`} className="lighting-card">
             {photo?.url ? (
               <img src={photo.url} alt={photo.alt_text || ""} loading="lazy" onError={onImageError} />
             ) : (
-              <span>Add lighting setup photo</span>
+              <span>Add BTS photo</span>
             )}
-            <figcaption>{photo?.title || `Lighting setup ${String(index + 1).padStart(2, "0")}`}</figcaption>
+            <figcaption>{photo?.title || `BTS setup ${String(index + 1).padStart(2, "0")}`}</figcaption>
           </figure>
         ))}
       </div>

@@ -53,6 +53,15 @@ const SECTION_GROUPS = [
     filterKey: "services",
   },
   {
+    id: "bts",
+    label: "BTS",
+    kicker: "Behind the scenes",
+    icon: "B",
+    description: "Upload BTS setup photos shown below the featured BTS video.",
+    slots: ["lighting_setup"],
+    filterKey: "bts",
+  },
+  {
     id: "other",
     label: "Other Page Slots",
     kicker: "About · OG · Sticky zoom",
@@ -70,6 +79,7 @@ const SLOT_PREFIX_MAP = {
   hero:     (slot) => slot === "hero_background",
   compare:  (slot) => slot.startsWith("compare_"),
   services: (slot) => slot.startsWith("services_bg"),
+  bts:      (slot) => slot === "lighting_setup",
   other:    (slot) => ["about_portrait", "og_image", "sticky_zoom"].includes(slot),
 };
 
