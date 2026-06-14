@@ -326,6 +326,12 @@
 .adm-badge-commercial { background: #fff7ed; color: #c2410c; }
 .adm-badge-fashion { background: #fdf0f7; color: #c02a7a; }
 .adm-badge-events  { background: #f0fdf4; color: #16a34a; }
+.adm-badge-fnb { background: #ecfdf5; color: #047857; }
+.adm-badge-commercial_photography { background: #fff7ed; color: #c2410c; }
+.adm-badge-jewelry_photography { background: #fdf4ff; color: #a21caf; }
+.adm-badge-product_photography { background: #f1f5f9; color: #334155; }
+.adm-badge-null,
+.adm-badge-undefined { background: #f3f4f6; color: #6b7280; }
 
 /* ─── Toolbar / filter tabs ───────────────────────────────────── */
 

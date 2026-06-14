@@ -1,7 +1,29 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { SLOTS } from "../data/slots.js";
 import SlotSelector from "./SlotSelector.jsx";
 import { api } from "../api.js";
+
+const LEGACY_CATEGORY_OPTIONS = [
+  { value: "brands", label: "Brands" },
+  { value: "filmmaking", label: "Filmmaking" },
+  { value: "commercial", label: "Commercial" },
+  { value: "fashion", label: "Fashion" },
+];
+
+const PHOTOGRAPHY_CATEGORY_OPTIONS = [
+  { value: "fnb", label: "Food & Beverage" },
+  { value: "commercial_photography", label: "Commercial Photography" },
+  { value: "jewelry_photography", label: "Jewelry Photography" },
+  { value: "product_photography", label: "Product Photography" },
+];
+
+const categoryFromSlot = (slot) => {
+  if (slot === "photo_fnb") return "fnb";
+  if (slot === "photo_commercial") return "commercial_photography";
+  if (slot === "photo_jewelry") return "jewelry_photography";
+  if (slot === "photo_product") return "product_photography";
+  return "brands";
+};
 
 // allowedSlots: string[] - if provided, only these slot IDs appear in the dropdown
 export default function UploadZone({ onUploaded, allowedSlots = null }) {
@@ -11,8 +33,9 @@ export default function UploadZone({ onUploaded, allowedSlots = null }) {
   const availableSlots = allowedSlots
     ? SLOTS.filter((s) => allowedSlots.includes(s.id))
     : SLOTS;
-  const [slot, setSlot] = useState((allowedSlots ? availableSlots[0]?.id : SLOTS[0].id) ?? SLOTS[0].id);
-  const [category, setCategory] = useState("brands");
+  const initialSlot = (allowedSlots ? availableSlots[0]?.id : SLOTS[0].id) ?? SLOTS[0].id;
+  const [slot, setSlot] = useState(initialSlot);
+  const [category, setCategory] = useState(categoryFromSlot(initialSlot));
   const [title, setTitle] = useState("");
   const [altText, setAltText] = useState("");
   const [sortOrder, setSortOrder] = useState(0);
@@ -22,6 +45,15 @@ export default function UploadZone({ onUploaded, allowedSlots = null }) {
   const [uploadStatus, setUploadStatus] = useState("");
   const [dragOver, setDragOver] = useState(false);
   const inputRef = useRef(null);
+  const isPhotographySlot = slot.startsWith("photo_");
+  const categoryOptions = isPhotographySlot ? PHOTOGRAPHY_CATEGORY_OPTIONS : LEGACY_CATEGORY_OPTIONS;
+
+  useEffect(() => {
+    const nextCategory = categoryFromSlot(slot);
+    if (isPhotographySlot || !categoryOptions.some((option) => option.value === category)) {
+      setCategory(nextCategory);
+    }
+  }, [slot]);
 
   const readImageDims = (file) =>
     new Promise((resolve) => {
@@ -221,10 +253,9 @@ export default function UploadZone({ onUploaded, allowedSlots = null }) {
             <label className="adm-field">
               <span>Category</span>
               <select value={category} onChange={(event) => setCategory(event.target.value)}>
-                <option value="brands">Brands</option>
-                <option value="filmmaking">Filmmaking</option>
-                <option value="commercial">Commercial</option>
-                <option value="fashion">Fashion</option>
+                {categoryOptions.map((option) => (
+                  <option key={option.value} value={option.value}>{option.label}</option>
+                ))}
               </select>
             </label>
           )}

@@ -48,7 +48,7 @@ export default function PhotoGrid({ photos, onUpdate, onRemove, onReorder }) {
           <div className="adm-photo-card-body">
             <div className="adm-photo-card-top">
               <span className="adm-photo-slot">{photo.slot}</span>
-              <span className={`adm-badge adm-badge-${photo.category}`}>{photo.category}</span>
+              <span className={`adm-badge adm-badge-${photo.category}`}>{photo.category || "none"}</span>
             </div>
             <div className="adm-photo-card-sort">
               {editingSort === photo.id ? (

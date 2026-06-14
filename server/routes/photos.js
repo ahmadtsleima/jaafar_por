@@ -62,6 +62,10 @@ router.get("/admin/stats", requireAuth, (req, res) => {
     commercial: catMap.commercial ?? 0,
     fashion:    catMap.fashion    ?? 0,
     events:     catMap.events     ?? 0,
+    fnb:         catMap.fnb         ?? 0,
+    commercial_photography: catMap.commercial_photography ?? 0,
+    jewelry_photography:    catMap.jewelry_photography    ?? 0,
+    product_photography:    catMap.product_photography    ?? 0,
     lastUpload,
   });
 });

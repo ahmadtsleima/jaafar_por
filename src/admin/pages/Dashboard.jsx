@@ -5,7 +5,7 @@ function MetricCard({ label, value, sub }) {
   return (
     <div className="adm-metric">
       <span className="adm-metric-label">{label}</span>
-      <strong className="adm-metric-value">{value ?? "—"}</strong>
+      <strong className="adm-metric-value">{value ?? "-"}</strong>
       {sub && <span className="adm-metric-sub">{sub}</span>}
     </div>
   );
@@ -18,8 +18,8 @@ export default function Dashboard() {
 
   useEffect(() => {
     Promise.all([api.stats(), api.photos.list()])
-      .then(([s, photos]) => {
-        setStats(s);
+      .then(([nextStats, photos]) => {
+        setStats(nextStats);
         setRecent(photos.slice(0, 5));
       })
       .catch(console.error)
@@ -29,17 +29,17 @@ export default function Dashboard() {
   const togglePublish = async (photo) => {
     try {
       const updated = await api.photos.update(photo.id, { published: !photo.published });
-      setRecent((prev) => prev.map((p) => (p.id === updated.id ? updated : p)));
+      setRecent((prev) => prev.map((item) => (item.id === updated.id ? updated : item)));
     } catch (err) {
       console.error(err);
     }
   };
 
-  if (loading) return <div className="adm-loading">Loading…</div>;
+  if (loading) return <div className="adm-loading">Loading...</div>;
 
   const lastDate = stats?.lastUpload
     ? new Date(stats.lastUpload).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })
-    : "—";
+    : "-";
 
   return (
     <div>
@@ -47,8 +47,8 @@ export default function Dashboard() {
         <MetricCard label="Total Photos" value={stats?.total} />
         <MetricCard label="Published" value={stats?.published} />
         <MetricCard
-          label="By Category"
-          value={`B ${stats?.brands ?? 0} · F ${stats?.fashion ?? 0} · E ${stats?.events ?? 0}`}
+          label="Photography"
+          value={`F&B ${stats?.fnb ?? 0} / Com ${stats?.commercial_photography ?? 0} / Jew ${stats?.jewelry_photography ?? 0} / Prod ${stats?.product_photography ?? 0}`}
         />
         <MetricCard label="Last Upload" value={lastDate} />
       </div>
@@ -68,7 +68,7 @@ export default function Dashboard() {
               />
               <div className="adm-recent-meta">
                 <span className="adm-recent-slot">{photo.slot}</span>
-                <span className={`adm-badge adm-badge-${photo.category}`}>{photo.category}</span>
+                <span className={`adm-badge adm-badge-${photo.category}`}>{photo.category || "none"}</span>
               </div>
               <span className="adm-recent-date">
                 {new Date(photo.uploaded_at).toLocaleDateString("en-GB", {
@@ -81,7 +81,7 @@ export default function Dashboard() {
                 title={photo.published ? "Unpublish" : "Publish"}
                 onClick={() => togglePublish(photo)}
               >
-                {photo.published ? "●" : "○"}
+                {photo.published ? "On" : "Off"}
               </button>
             </div>
           ))}
