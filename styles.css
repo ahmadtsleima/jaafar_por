@@ -8533,6 +8533,15 @@ main#top {
   animation-range: entry 0% cover 28%;
 }
 
+.cinema-video-card.is-openable {
+  cursor: pointer;
+}
+
+.cinema-video-card.is-openable:focus-visible {
+  outline: 2px solid rgba(201, 169, 110, 0.85);
+  outline-offset: 6px;
+}
+
 .cinema-video-card.is-featured {
   gap: 18px;
 }
@@ -8695,6 +8704,10 @@ main#top {
   justify-self: center;
 }
 
+.cinema-color .grading-video-row .cinema-video-card {
+  width: 100%;
+}
+
 .cinema-color .cinema-video-card.is-featured {
   grid-template-columns: 1fr;
 }
@@ -8702,6 +8715,10 @@ main#top {
 .cinema-color .cinema-video-card.is-featured .cinema-video-frame,
 .cinema-color .cinema-video-card.is-vertical .cinema-video-frame {
   aspect-ratio: 9 / 16;
+}
+
+.cinema-color .grading-video-row .cinema-video-card.is-featured .cinema-video-frame {
+  aspect-ratio: 18 / 16;
 }
 
 .cinema-color .cinema-video-card.is-featured .cinema-video-meta {
@@ -8918,6 +8935,57 @@ main#top {
   text-align: center;
 }
 
+.video-lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 3100;
+  display: grid;
+  place-items: center;
+  padding: 22px;
+}
+
+.video-lightbox-backdrop {
+  position: absolute;
+  inset: 0;
+  border: 0;
+  background: rgba(0, 0, 0, 0.9);
+}
+
+.video-lightbox figure {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  gap: 12px;
+  width: min(520px, 100%);
+  margin: 0;
+}
+
+.video-lightbox video,
+.video-lightbox iframe {
+  width: 100%;
+  aspect-ratio: 9 / 16;
+  border: 1px solid rgba(245, 244, 240, 0.15);
+  border-radius: 8px;
+  background: #050505;
+  object-fit: contain;
+}
+
+.video-lightbox button:not(.video-lightbox-backdrop) {
+  justify-self: end;
+  min-height: 40px;
+  padding: 0 16px;
+  border: 1px solid rgba(245, 244, 240, 0.18);
+  border-radius: 999px;
+  background: rgba(245, 244, 240, 0.08);
+  color: #f5f4f0;
+  cursor: pointer;
+}
+
+.video-lightbox figcaption {
+  color: rgba(245, 244, 240, 0.72);
+  text-align: center;
+}
+
 .lighting-gallery {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -9007,6 +9075,10 @@ main#top {
 
   .cinema-color .cinema-video-card.is-featured .cinema-video-frame {
     aspect-ratio: 9 / 16;
+  }
+
+  .cinema-color .grading-video-row .cinema-video-card {
+    width: min(100%, 410px);
   }
 
   .lighting-gallery {

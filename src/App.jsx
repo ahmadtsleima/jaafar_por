@@ -508,19 +508,39 @@ function SectionHeading({ kicker, title, children }) {
   );
 }
 
-function CinematicVideo({ video, vertical = false, featured = false, label }) {
+function CinematicVideo({ video, vertical = false, featured = false, label, autoPlay = false, onOpen }) {
   const videoRef = useRef(null);
   const src = video?.url || video?.src || "";
 
   const play = () => videoRef.current?.play?.().catch(() => {});
   const pause = () => {
+    if (autoPlay) return;
     if (!videoRef.current) return;
     videoRef.current.pause();
     try { videoRef.current.currentTime = 0; } catch { /* metadata may not be ready */ }
   };
 
+  useEffect(() => {
+    if (!autoPlay || !src || isVimeoUrl(src)) return;
+    play();
+  }, [autoPlay, src]);
+
+  const handleKeyDown = (event) => {
+    if (!onOpen) return;
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      onOpen(video);
+    }
+  };
+
   return (
-    <article className={`cinema-video-card${vertical ? " is-vertical" : ""}${featured ? " is-featured" : ""}`}>
+    <article
+      className={`cinema-video-card${vertical ? " is-vertical" : ""}${featured ? " is-featured" : ""}${onOpen ? " is-openable" : ""}`}
+      role={onOpen ? "button" : undefined}
+      tabIndex={onOpen ? 0 : undefined}
+      onClick={() => src && onOpen?.(video)}
+      onKeyDown={handleKeyDown}
+    >
       <div className="cinema-video-frame">
         {src ? (
           isVimeoUrl(src) ? (
@@ -538,7 +558,9 @@ function CinematicVideo({ video, vertical = false, featured = false, label }) {
               muted
               loop
               playsInline
-              preload={featured ? "auto" : "metadata"}
+              autoPlay={autoPlay}
+              preload={featured || autoPlay ? "auto" : "metadata"}
+              onCanPlay={autoPlay ? play : undefined}
               onPointerEnter={play}
               onPointerLeave={pause}
               onFocus={play}
@@ -560,6 +582,8 @@ function CinematicVideo({ video, vertical = false, featured = false, label }) {
 
 function MotionDesignSection() {
   const videos = useVideosFromSlots(motionDesignSlots);
+  const [activeVideo, setActiveVideo] = useState(null);
+  const closeVideo = () => setActiveVideo(null);
 
   return (
     <section className="cinema-section cinema-motion" id="motion-design">
@@ -572,10 +596,32 @@ function MotionDesignSection() {
             key={video?.id || `motion-placeholder-${index}`}
             video={video}
             vertical
+            autoPlay
+            onOpen={setActiveVideo}
             label={`Motion ${String(index + 1).padStart(2, "0")}`}
           />
         ))}
       </div>
+      {activeVideo && createPortal(
+        <div className="video-lightbox" role="dialog" aria-modal="true" aria-label="Motion Design video viewer">
+          <button type="button" className="video-lightbox-backdrop" onClick={closeVideo} aria-label="Close video" />
+          <figure>
+            <button type="button" onClick={closeVideo} aria-label="Close video">Close</button>
+            {isVimeoUrl(activeVideo.url || activeVideo.src) ? (
+              <iframe
+                src={vimeoSrc(activeVideo.url || activeVideo.src)}
+                title={activeVideo.title || "Motion Design video"}
+                allow="autoplay; fullscreen; picture-in-picture"
+                allowFullScreen
+              />
+            ) : (
+              <video src={activeVideo.url || activeVideo.src} controls autoPlay playsInline />
+            )}
+            <figcaption>{activeVideo.title || "Motion Design"}</figcaption>
+          </figure>
+        </div>,
+        document.body,
+      )}
     </section>
   );
 }
