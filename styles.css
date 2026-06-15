@@ -8988,6 +8988,20 @@ main#top {
   display: none;
 }
 
+.cinema-lighting .cinema-video-card {
+  width: min(100%, 430px);
+  margin: 0 auto;
+}
+
+.cinema-lighting .cinema-video-card.is-featured {
+  grid-template-columns: 1fr;
+}
+
+.cinema-lighting .cinema-video-card.is-featured .cinema-video-frame,
+.cinema-lighting .cinema-video-card.is-vertical .cinema-video-frame {
+  aspect-ratio: 9 / 16;
+}
+
 .lighting-gallery {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));

@@ -93,7 +93,7 @@ function App() {
         }
       }
 
-      const navSections = ["top", "motion-design", "filmmaking", "color-grading", "photography", "bts"];
+      const navSections = ["top", "motion-design", "filmmaking", "color-grading", "photography", "bts", "about"];
       const currentSection =
         [...navSections].reverse().find((sectionId) => {
           const section = document.getElementById(sectionId);
@@ -236,6 +236,7 @@ function App() {
         <ColorGradingPortfolio onImageError={handleImageError} />
         <PhotographyPortfolio onImageError={handleImageError} />
         <BTSSection onImageError={handleImageError} />
+        <About onImageError={handleImageError} />
         <MiniFooter />
       </main>
 
@@ -277,6 +278,7 @@ function Header({ headerRef, isMenuOpen, setIsMenuOpen, activeSection }) {
           <a className="nav-link" href="#color-grading" aria-current={activeSection === "color-grading" ? "page" : undefined}>Color</a>
           <a className="nav-link" href="#photography" aria-current={activeSection === "photography" ? "page" : undefined}>Photo</a>
           <a className="nav-link" href="#bts" aria-current={activeSection === "bts" ? "page" : undefined}>BTS</a>
+          <a className="nav-link" href="#about" aria-current={activeSection === "about" ? "page" : undefined}>About</a>
         </nav>
 
         <div className="nav-actions">
@@ -294,6 +296,7 @@ function Header({ headerRef, isMenuOpen, setIsMenuOpen, activeSection }) {
           <a href="#color-grading" onClick={closeMenu}>Color</a>
           <a href="#photography" onClick={closeMenu}>Photo</a>
           <a href="#bts" onClick={closeMenu}>BTS</a>
+          <a href="#about" onClick={closeMenu}>About</a>
         </div>
       </nav>
     </header>
@@ -824,7 +827,7 @@ function BTSSection({ onImageError }) {
       <SectionHeading kicker="Behind the scenes" title="BTS">
         A closer look at the setups, camera-side moments, and production details behind the final frame.
       </SectionHeading>
-      <CinematicVideo video={videos[0]} featured label="Lighting Techniques" />
+      <CinematicVideo video={videos[0]} vertical featured label="Lighting Techniques" />
       <div className="lighting-gallery">
         {(lightingPhotos.length ? lightingPhotos : Array.from({ length: 3 })).slice(0, 3).map((photo, index) => (
           <figure key={photo?.id || `lighting-placeholder-${index}`} className="lighting-card">

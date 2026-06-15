@@ -30,6 +30,6 @@ export const VIDEO_SLOTS = [
   { id: "motion_commercial",   label: "Motion - Commercial",       notes: "Published videos appear in the Commercial filter of Video Projects." },
   { id: "motion_fashion",      label: "Motion - Fashion",          notes: "Published videos appear in the Fashion filter of Video Projects." },
   { id: "color_grading_video", label: "Color Grading video",       notes: "Vertical 1080x1920 cinematic video placed between before/after slider sets in the Color Grading section." },
-  { id: "lighting_featured",   label: "BTS featured video",        notes: "Large featured cinematic video at the top of the BTS section." },
+  { id: "lighting_featured",   label: "BTS featured video",        notes: "Vertical 1080x1920 featured cinematic video at the top of the BTS section." },
   { id: "services_reel",       label: "Services section reel",     notes: "Ambient looping video background in the circular gallery section." },
 ];

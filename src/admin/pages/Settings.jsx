@@ -112,7 +112,7 @@ const VIDEO_SLOT_ROWS = [
   { slot: "motion_design",       resolution: "1080 x 1920", format: "MP4 (H.264)",        maxSize: "No limit", fps: "24-60", notes: "Vertical reels for the Motion Design section." },
   { slot: "filmmaking",          resolution: "1920 x 1080", format: "MP4 (H.264)",        maxSize: "No limit", fps: "24-60", notes: "Large horizontal cinematic cards." },
   { slot: "color_grading_video", resolution: "1080 x 1920", format: "MP4 / WebM / MOV", maxSize: "No limit", fps: "24-30", notes: "Vertical video placed between before/after slider sets. MOV works best when encoded as H.264." },
-  { slot: "lighting_featured",   resolution: "1920 x 1080", format: "MP4 (H.264) / WebM", maxSize: "No limit", fps: "24-30", notes: "Featured video at the top of BTS." },
+  { slot: "lighting_featured",   resolution: "1080 x 1920", format: "MP4 (H.264) / WebM", maxSize: "No limit", fps: "24-30", notes: "Vertical featured video at the top of BTS." },
   { slot: "reel_showcase",       resolution: "1920 x 1080", format: "MP4 (H.264)",        maxSize: "No limit", fps: "24-60", notes: "Horizontal featured reel section. Multiple videos allowed." },
   { slot: "motion_brands",       resolution: "1920 x 1080", format: "MP4 (H.264)",        maxSize: "No limit", fps: "24-60", notes: "Brand project reels." },
   { slot: "motion_filmmaking",   resolution: "1920 x 1080", format: "MP4 (H.264)",        maxSize: "No limit", fps: "24-60", notes: "Legacy filmmaking reel slot, still supported." },
