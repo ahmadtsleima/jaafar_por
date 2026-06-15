@@ -50,7 +50,7 @@ function uploadWithProgress(path, formData, onProgress) {
     const token = getToken();
     const xhr = new XMLHttpRequest();
     xhr.open("POST", `${API_BASE}/api${path}`);
-    xhr.timeout = 120000;
+    xhr.timeout = 0;
     if (token) xhr.setRequestHeader("Authorization", `Bearer ${token}`);
 
     xhr.upload.addEventListener("progress", (e) => {
@@ -73,7 +73,7 @@ function uploadWithProgress(path, formData, onProgress) {
     });
 
     xhr.addEventListener("error", () => reject(new Error("Network error")));
-    xhr.addEventListener("timeout", () => reject(new Error("Upload timed out after 120 seconds")));
+    xhr.addEventListener("timeout", () => reject(new Error("Upload timed out")));
     xhr.addEventListener("abort", () => reject(new Error("Upload cancelled")));
     xhr.send(formData);
   });

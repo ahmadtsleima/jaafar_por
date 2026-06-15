@@ -8990,15 +8990,16 @@ main#top {
 
 .lighting-gallery {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: clamp(12px, 2vw, 22px);
-  max-width: 1380px;
+  max-width: 920px;
   margin: clamp(28px, 4vw, 56px) auto 0;
 }
 
 .lighting-card {
   position: relative;
-  min-height: 320px;
+  min-height: 0;
+  aspect-ratio: 9 / 16;
   margin: 0;
   overflow: hidden;
   border: 1px solid rgba(245, 244, 240, 0.12);
@@ -9006,10 +9007,14 @@ main#top {
   background: rgba(245, 244, 240, 0.04);
 }
 
+.lighting-card:nth-child(3) {
+  grid-column: 1 / -1;
+  aspect-ratio: 16 / 9;
+}
+
 .lighting-card img {
   width: 100%;
   height: 100%;
-  min-height: 320px;
   object-fit: cover;
   transition: transform 520ms ease, filter 520ms ease;
 }
@@ -9075,6 +9080,11 @@ main#top {
 
   .lighting-gallery {
     grid-template-columns: 1fr;
+  }
+
+  .lighting-card:nth-child(3) {
+    grid-column: auto;
+    aspect-ratio: 16 / 9;
   }
 }
 
