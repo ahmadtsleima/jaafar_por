@@ -671,7 +671,6 @@ function FilmmakingSection() {
           <CinematicVideo
             key={video?.id || `film-placeholder-${index}`}
             video={video}
-            featured={index === 0}
             label={`Scene ${String(index + 1).padStart(2, "0")}`}
           />
         ))}
@@ -858,24 +857,28 @@ function BTSSection({ onImageError }) {
   const lightingPhotos = photos.filter((photo) =>
     ["lighting_setup", "services_bg_brands", "services_bg_fashion", "services_bg_events", "sticky_zoom"].includes(photo.slot),
   );
+  const btsPhotos = (lightingPhotos.length ? lightingPhotos : Array.from({ length: 2 })).slice(0, 2);
+
+  const renderBtsPhoto = (photo, index) => (
+    <figure key={photo?.id || `lighting-placeholder-${index}`} className="lighting-card">
+      {photo?.url ? (
+        <img src={photo.url} alt={photo.alt_text || ""} loading="lazy" onError={onImageError} />
+      ) : (
+        <span>{t("bts.emptyPhoto")}</span>
+      )}
+      <figcaption>{photo?.title || `${t("bts.photoLabel")} ${String(index + 1).padStart(2, "0")}`}</figcaption>
+    </figure>
+  );
 
   return (
     <section className="cinema-section cinema-lighting" id="bts">
       <SectionHeading kicker={t("bts.kicker")} title={t("bts.title")}>
         {t("bts.body")}
       </SectionHeading>
-      <CinematicVideo video={videos[0]} vertical featured label={t("bts.videoLabel")} />
-      <div className="lighting-gallery">
-        {(lightingPhotos.length ? lightingPhotos : Array.from({ length: 3 })).slice(0, 3).map((photo, index) => (
-          <figure key={photo?.id || `lighting-placeholder-${index}`} className="lighting-card">
-            {photo?.url ? (
-              <img src={photo.url} alt={photo.alt_text || ""} loading="lazy" onError={onImageError} />
-            ) : (
-              <span>{t("bts.emptyPhoto")}</span>
-            )}
-            <figcaption>{photo?.title || `${t("bts.photoLabel")} ${String(index + 1).padStart(2, "0")}`}</figcaption>
-          </figure>
-        ))}
+      <div className="bts-media-row">
+        {renderBtsPhoto(btsPhotos[0], 0)}
+        <CinematicVideo video={videos[0]} vertical label={t("bts.videoLabel")} />
+        {renderBtsPhoto(btsPhotos[1], 1)}
       </div>
     </section>
   );

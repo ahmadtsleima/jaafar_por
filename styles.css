@@ -8989,8 +8989,8 @@ main#top {
 }
 
 .cinema-lighting .cinema-video-card {
-  width: min(100%, 430px);
-  margin: 0 auto;
+  width: 100%;
+  margin: 0;
 }
 
 .cinema-lighting .cinema-video-card.is-featured {
@@ -8999,6 +8999,25 @@ main#top {
 
 .cinema-lighting .cinema-video-card.is-featured .cinema-video-frame,
 .cinema-lighting .cinema-video-card.is-vertical .cinema-video-frame {
+  aspect-ratio: 9 / 16;
+}
+
+.bts-media-row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: start;
+  gap: clamp(12px, 2vw, 24px);
+  max-width: 1120px;
+  margin: 0 auto;
+}
+
+.bts-media-row .cinema-video-card,
+.bts-media-row .lighting-card {
+  min-width: 0;
+}
+
+.bts-media-row .lighting-card:nth-child(3) {
+  grid-column: auto;
   aspect-ratio: 9 / 16;
 }
 
@@ -9096,9 +9115,14 @@ main#top {
     grid-template-columns: 1fr;
   }
 
+  .bts-media-row {
+    grid-template-columns: 1fr;
+    max-width: 430px;
+  }
+
   .lighting-card:nth-child(3) {
     grid-column: auto;
-    aspect-ratio: 16 / 9;
+    aspect-ratio: 9 / 16;
   }
 }
 
