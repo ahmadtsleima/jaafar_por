@@ -540,7 +540,18 @@ function SectionHeading({ kicker, title, children }) {
 function CinematicVideo({ video, vertical = false, featured = false, label, autoPlay = false, onOpen }) {
   const t = useText();
   const videoRef = useRef(null);
+  const [popupVideo, setPopupVideo] = useState(null);
   const src = video?.url || video?.src || "";
+  const canOpen = Boolean(src);
+  const openVideo = () => {
+    if (!canOpen) return;
+    if (onOpen) {
+      onOpen(video);
+    } else {
+      setPopupVideo({ ...video, url: src, src, title: video?.title || label || "Portfolio video" });
+    }
+  };
+  const closeVideo = () => setPopupVideo(null);
 
   const play = () => videoRef.current?.play?.().catch(() => {});
   const pause = () => {
@@ -556,57 +567,80 @@ function CinematicVideo({ video, vertical = false, featured = false, label, auto
   }, [autoPlay, src]);
 
   const handleKeyDown = (event) => {
-    if (!onOpen) return;
+    if (!canOpen) return;
     if (event.key === "Enter" || event.key === " ") {
       event.preventDefault();
-      onOpen(video);
+      openVideo();
     }
   };
 
   return (
-    <article
-      className={`cinema-video-card${vertical ? " is-vertical" : ""}${featured ? " is-featured" : ""}${onOpen ? " is-openable" : ""}`}
-      role={onOpen ? "button" : undefined}
-      tabIndex={onOpen ? 0 : undefined}
-      onClick={() => src && onOpen?.(video)}
-      onKeyDown={handleKeyDown}
-    >
-      <div className="cinema-video-frame">
-        {src ? (
-          isVimeoUrl(src) ? (
-            <iframe
-              src={vimeoSrc(src, { background: true })}
-              title={video?.title || label || "Portfolio video"}
-              loading="lazy"
-              allow="autoplay; fullscreen; picture-in-picture"
-              allowFullScreen
-            />
+    <>
+      <article
+        className={`cinema-video-card${vertical ? " is-vertical" : ""}${featured ? " is-featured" : ""}${canOpen ? " is-openable" : ""}`}
+        role={canOpen ? "button" : undefined}
+        tabIndex={canOpen ? 0 : undefined}
+        onClick={openVideo}
+        onKeyDown={handleKeyDown}
+      >
+        <div className="cinema-video-frame">
+          {src ? (
+            isVimeoUrl(src) ? (
+              <iframe
+                src={vimeoSrc(src, { background: true })}
+                title={video?.title || label || "Portfolio video"}
+                loading="lazy"
+                allow="autoplay; fullscreen; picture-in-picture"
+                allowFullScreen
+              />
+            ) : (
+              <video
+                ref={videoRef}
+                src={src}
+                muted
+                loop
+                playsInline
+                autoPlay={autoPlay}
+                preload={featured || autoPlay ? "auto" : "metadata"}
+                onCanPlay={autoPlay ? play : undefined}
+                onPointerEnter={play}
+                onPointerLeave={pause}
+                onFocus={play}
+                onBlur={pause}
+              />
+            )
           ) : (
-            <video
-              ref={videoRef}
-              src={src}
-              muted
-              loop
-              playsInline
-              autoPlay={autoPlay}
-              preload={featured || autoPlay ? "auto" : "metadata"}
-              onCanPlay={autoPlay ? play : undefined}
-              onPointerEnter={play}
-              onPointerLeave={pause}
-              onFocus={play}
-              onBlur={pause}
-            />
-          )
-        ) : (
-          <div className="cinema-empty-media">{t("video.empty")}</div>
-        )}
-        <span className="cinema-play-pulse" aria-hidden="true" />
-      </div>
-      <div className="cinema-video-meta">
-        <span>{label || video?.slot?.replaceAll("_", " ") || "Film"}</span>
-        <strong>{video?.title || "Untitled study"}</strong>
-      </div>
-    </article>
+            <div className="cinema-empty-media">{t("video.empty")}</div>
+          )}
+          <span className="cinema-play-pulse" aria-hidden="true" />
+        </div>
+        <div className="cinema-video-meta">
+          <span>{label || video?.slot?.replaceAll("_", " ") || "Film"}</span>
+          <strong>{video?.title || "Untitled study"}</strong>
+        </div>
+      </article>
+
+      {popupVideo && createPortal(
+        <div className="video-lightbox" role="dialog" aria-modal="true" aria-label={`${popupVideo.title} viewer`}>
+          <button type="button" className="video-lightbox-backdrop" onClick={closeVideo} aria-label={t("video.closeLabel")} />
+          <figure>
+            <button type="button" onClick={closeVideo} aria-label={t("video.closeLabel")}>{t("video.close")}</button>
+            {isVimeoUrl(popupVideo.url || popupVideo.src) ? (
+              <iframe
+                src={vimeoSrc(popupVideo.url || popupVideo.src)}
+                title={popupVideo.title}
+                allow="autoplay; fullscreen; picture-in-picture"
+                allowFullScreen
+              />
+            ) : (
+              <video src={popupVideo.url || popupVideo.src} controls autoPlay playsInline />
+            )}
+            <figcaption>{popupVideo.title}</figcaption>
+          </figure>
+        </div>,
+        document.body,
+      )}
+    </>
   );
 }
 
