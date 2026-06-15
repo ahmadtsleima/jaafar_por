@@ -8696,7 +8696,7 @@ main#top {
 }
 
 .cinema-video-meta {
-  display: none;
+  display: none !important;
   align-items: end;
   justify-content: space-between;
   gap: 16px;
