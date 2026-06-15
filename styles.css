@@ -8530,12 +8530,82 @@ main#top {
   line-height: 1.65;
 }
 
-.motion-reel-grid {
+.motion-slider-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  max-width: 1380px;
+  margin: 0 auto clamp(18px, 3vw, 34px);
+}
+
+.motion-slider-head span {
+  color: rgba(245, 244, 240, 0.54);
+  font: 850 11px/1 var(--font-ui);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.motion-slider-controls {
+  display: inline-flex;
+  gap: 8px;
+}
+
+.motion-slider-controls button {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: clamp(12px, 2vw, 24px);
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 1px solid rgba(245, 244, 240, 0.16);
+  border-radius: 999px;
+  background: rgba(245, 244, 240, 0.05);
+  color: #f5f4f0;
+  font: 900 18px/1 var(--font-ui);
+  cursor: pointer;
+  transition: transform 180ms ease, border-color 180ms ease, background 180ms ease;
+}
+
+.motion-slider-controls button:hover {
+  border-color: rgba(201, 169, 110, 0.7);
+  background: rgba(201, 169, 110, 0.13);
+  transform: translateY(-2px);
+}
+
+.motion-slider-shell {
   max-width: 1380px;
   margin: 0 auto;
+  overflow: hidden;
+}
+
+.motion-reel-grid {
+  display: flex;
+  gap: clamp(12px, 2vw, 24px);
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x mandatory;
+  scroll-padding-inline: clamp(4px, 1vw, 10px);
+  padding: 4px 4px 22px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(201, 169, 110, 0.55) rgba(245, 244, 240, 0.08);
+}
+
+.motion-reel-grid::-webkit-scrollbar {
+  height: 8px;
+}
+
+.motion-reel-grid::-webkit-scrollbar-track {
+  background: rgba(245, 244, 240, 0.08);
+  border-radius: 999px;
+}
+
+.motion-reel-grid::-webkit-scrollbar-thumb {
+  background: rgba(201, 169, 110, 0.55);
+  border-radius: 999px;
+}
+
+.motion-reel-grid .cinema-video-card {
+  flex: 0 0 clamp(220px, 22vw, 330px);
+  scroll-snap-align: start;
 }
 
 .cinema-video-card {

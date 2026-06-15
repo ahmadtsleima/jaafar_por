@@ -647,25 +647,43 @@ function CinematicVideo({ video, vertical = false, featured = false, label, auto
 function MotionDesignSection() {
   const t = useText();
   const videos = useVideosFromSlots(motionDesignSlots);
+  const motionTrackRef = useRef(null);
   const [activeVideo, setActiveVideo] = useState(null);
   const closeVideo = () => setActiveVideo(null);
+  const motionVideos = videos.length ? videos : Array.from({ length: 4 });
+
+  const scrollMotionTrack = (direction) => {
+    const track = motionTrackRef.current;
+    if (!track) return;
+    const distance = Math.min(track.clientWidth * 0.84, 460);
+    track.scrollBy({ left: direction * distance, behavior: "smooth" });
+  };
 
   return (
     <section className="cinema-section cinema-motion" id="motion-design">
       <SectionHeading kicker={t("motion.kicker")} title={t("motion.title")}>
         {t("motion.body")}
       </SectionHeading>
-      <div className="motion-reel-grid">
-        {(videos.length ? videos : Array.from({ length: 4 })).slice(0, 8).map((video, index) => (
-          <CinematicVideo
-            key={video?.id || `motion-placeholder-${index}`}
-            video={video}
-            vertical
-            autoPlay
-            onOpen={setActiveVideo}
-            label={`Motion ${String(index + 1).padStart(2, "0")}`}
-          />
-        ))}
+      <div className="motion-slider-head">
+        <span>{String(motionVideos.length).padStart(2, "0")} reels</span>
+        <div className="motion-slider-controls" aria-label="Motion Design carousel controls">
+          <button type="button" onClick={() => scrollMotionTrack(-1)} aria-label="Previous motion videos">&lt;</button>
+          <button type="button" onClick={() => scrollMotionTrack(1)} aria-label="Next motion videos">&gt;</button>
+        </div>
+      </div>
+      <div className="motion-slider-shell">
+        <div className="motion-reel-grid" ref={motionTrackRef}>
+          {motionVideos.map((video, index) => (
+            <CinematicVideo
+              key={video?.id || `motion-placeholder-${index}`}
+              video={video}
+              vertical
+              autoPlay
+              onOpen={setActiveVideo}
+              label={`Motion ${String(index + 1).padStart(2, "0")}`}
+            />
+          ))}
+        </div>
       </div>
       {activeVideo && createPortal(
         <div className="video-lightbox" role="dialog" aria-modal="true" aria-label="Motion Design video viewer">
