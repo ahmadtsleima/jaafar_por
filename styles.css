@@ -5712,7 +5712,7 @@ main#top {
   inset: 0 0 auto;
   z-index: 1;
   height: clamp(120px, 18vw, 260px);
-  background: linear-gradient(to bottom, #0a0a0a 0%, rgba(10, 10, 10, 0.72) 38%, transparent 100%);
+  background: linear-gradient(to bottom, transparent 0%, rgba(10, 10, 10, 0.48) 36%, transparent 100%);
   pointer-events: none;
 }
 
