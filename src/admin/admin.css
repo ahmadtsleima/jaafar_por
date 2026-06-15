@@ -100,6 +100,57 @@
   min-height: 100vh;
 }
 
+/* Text editor */
+.adm-text-page {
+  display: grid;
+  gap: 22px;
+}
+
+.adm-text-actions {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 14px;
+  padding: 12px 0;
+  background: var(--adm-bg, #f7f4ef);
+}
+
+.adm-text-message {
+  color: #666;
+  font-size: 13px;
+}
+
+.adm-text-groups {
+  display: grid;
+  gap: 18px;
+}
+
+.adm-text-field-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.adm-text-field-grid textarea {
+  min-height: 110px;
+  resize: vertical;
+}
+
+.adm-text-field-grid .adm-field em {
+  color: #999;
+  font-size: 11px;
+  font-style: normal;
+}
+
+@media (max-width: 760px) {
+  .adm-text-field-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 .adm-topbar {
   display: flex;
   align-items: center;

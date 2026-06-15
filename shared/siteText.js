@@ -1,0 +1,76 @@
+export const SITE_TEXT_FIELDS = [
+  { key: "site.brand", section: "Navigation", label: "Site brand", value: "Jaafar Sleiman" },
+  { key: "nav.home", section: "Navigation", label: "Home link", value: "Home" },
+  { key: "nav.motion", section: "Navigation", label: "Motion link", value: "Motion" },
+  { key: "nav.films", section: "Navigation", label: "Films link", value: "Films" },
+  { key: "nav.color", section: "Navigation", label: "Color link", value: "Color" },
+  { key: "nav.photo", section: "Navigation", label: "Photo link", value: "Photo" },
+  { key: "nav.bts", section: "Navigation", label: "BTS link", value: "BTS" },
+  { key: "nav.about", section: "Navigation", label: "About link", value: "About" },
+  { key: "nav.instagram", section: "Navigation", label: "Instagram link", value: "Instagram" },
+  { key: "nav.book", section: "Navigation", label: "Book button", value: "Book a Shoot" },
+  { key: "nav.menu", section: "Navigation", label: "Mobile menu label", value: "Menu" },
+  { key: "nav.openMenu", section: "Navigation", label: "Open menu accessibility label", value: "Open menu" },
+  { key: "nav.closeMenu", section: "Navigation", label: "Close menu accessibility label", value: "Close menu" },
+
+  { key: "hero.index", section: "Hero", label: "Hero index label", value: "Portfolio concept" },
+  { key: "hero.eyebrow", section: "Hero", label: "Hero eyebrow", value: "Editorial / Commercial / Cultural" },
+  { key: "hero.firstName", section: "Hero", label: "First name", value: "Jaafar" },
+  { key: "hero.lastName", section: "Hero", label: "Last name", value: "Sleiman" },
+  { key: "hero.copy", section: "Hero", label: "Hero paragraph", type: "textarea", value: "A black and white visual studio for quiet emotion, sharp light, and stories that feel composed without feeling staged." },
+  { key: "hero.primaryCta", section: "Hero", label: "Primary CTA", value: "View Work" },
+  { key: "hero.secondaryCta", section: "Hero", label: "Secondary CTA", value: "Start a Shoot" },
+  { key: "hero.meta1", section: "Hero", label: "Hero meta 1", value: "Brands & Campaigns" },
+  { key: "hero.meta2", section: "Hero", label: "Hero meta 2", value: "Fashion Editorial" },
+  { key: "hero.meta3", section: "Hero", label: "Hero meta 3", value: "Events & Culture" },
+
+  { key: "motion.kicker", section: "Motion Design", label: "Kicker", value: "Vertical reels / 1080x1920" },
+  { key: "motion.title", section: "Motion Design", label: "Title", value: "Motion Design" },
+  { key: "motion.body", section: "Motion Design", label: "Description", type: "textarea", value: "Designed for thumb-stopping vertical rhythm, kinetic cuts, and high-retention brand motion." },
+
+  { key: "filmmaking.kicker", section: "Filmmaking", label: "Kicker", value: "Narrative / campaign / editorial" },
+  { key: "filmmaking.title", section: "Filmmaking", label: "Title", value: "Filmmaking" },
+  { key: "filmmaking.body", section: "Filmmaking", label: "Description", type: "textarea", value: "Full-width cinematic work built around pacing, atmosphere, and visual storytelling." },
+
+  { key: "color.kicker", section: "Color Grading", label: "Kicker", value: "Before / after / final grade" },
+  { key: "color.title", section: "Color Grading", label: "Title", value: "Color Grading" },
+  { key: "color.body", section: "Color Grading", label: "Description", type: "textarea", value: "Drag through the frame and feel the tone shift from neutral capture to finished cinematic image." },
+  { key: "color.emptyFirstPair", section: "Color Grading", label: "Missing first comparison text", value: "Add compare_before and compare_after images in admin." },
+  { key: "color.emptySecondPair", section: "Color Grading", label: "Missing second comparison text", value: "Add a second before/after pair to complete the sequence." },
+  { key: "color.videoLabel", section: "Color Grading", label: "Video label", value: "Cinematic grade film" },
+
+  { key: "photography.kicker", section: "Photography", label: "Kicker", value: "Still image archive" },
+  { key: "photography.title", section: "Photography", label: "Title", value: "Photography" },
+  { key: "photography.body", section: "Photography", label: "Description", type: "textarea", value: "Premium image studies across food, commercial, jewelry, and product work." },
+  { key: "photography.category.fnb", section: "Photography", label: "F&B tab", value: "Food & Beverage" },
+  { key: "photography.category.commercial", section: "Photography", label: "Commercial tab", value: "Commercial Photography" },
+  { key: "photography.category.jewelry", section: "Photography", label: "Jewelry tab", value: "Jewelry Photography" },
+  { key: "photography.category.product", section: "Photography", label: "Product tab", value: "Product Photography" },
+  { key: "photography.previous", section: "Photography", label: "Previous button label", value: "Previous photos" },
+  { key: "photography.next", section: "Photography", label: "Next button label", value: "Next photos" },
+  { key: "photography.empty", section: "Photography", label: "Missing photo text", value: "Add gallery photo" },
+  { key: "photography.closePreview", section: "Photography", label: "Close preview label", value: "Close preview" },
+  { key: "photography.close", section: "Photography", label: "Close button text", value: "Close" },
+
+  { key: "bts.kicker", section: "BTS", label: "Kicker", value: "Behind the scenes" },
+  { key: "bts.title", section: "BTS", label: "Title", value: "BTS" },
+  { key: "bts.body", section: "BTS", label: "Description", type: "textarea", value: "A closer look at the setups, camera-side moments, and production details behind the final frame." },
+  { key: "bts.videoLabel", section: "BTS", label: "Video label", value: "Lighting Techniques" },
+  { key: "bts.emptyPhoto", section: "BTS", label: "Missing photo text", value: "Add BTS photo" },
+  { key: "bts.photoLabel", section: "BTS", label: "Photo fallback label", value: "BTS setup" },
+
+  { key: "video.empty", section: "Shared Media", label: "Missing video text", value: "Add video in admin" },
+  { key: "video.close", section: "Shared Media", label: "Video close button text", value: "Close" },
+  { key: "video.closeLabel", section: "Shared Media", label: "Video close accessibility label", value: "Close video" },
+
+  { key: "about.title", section: "About", label: "About headline", value: "Light, emotion, and honest moments." },
+
+  { key: "footer.copyright", section: "Footer", label: "Copyright", value: "© 2026 Jaafar Sleiman" },
+  { key: "footer.instagram", section: "Footer", label: "Instagram link", value: "Instagram" },
+  { key: "footer.whatsapp", section: "Footer", label: "WhatsApp link", value: "WhatsApp" },
+  { key: "footer.location", section: "Footer", label: "Location", value: "Beirut · Worldwide" },
+];
+
+export const SITE_TEXT_DEFAULTS = Object.fromEntries(
+  SITE_TEXT_FIELDS.map((field) => [field.key, field.value]),
+);

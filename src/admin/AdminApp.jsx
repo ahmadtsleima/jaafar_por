@@ -2,6 +2,7 @@ import { useState } from "react";
 import Login from "./pages/Login.jsx";
 import Dashboard from "./pages/Dashboard.jsx";
 import Photos from "./pages/Photos.jsx";
+import Texts from "./pages/Texts.jsx";
 import Videos from "./pages/Videos.jsx";
 import Settings from "./pages/Settings.jsx";
 import Sidebar from "./components/Sidebar.jsx";
@@ -9,7 +10,7 @@ import TopBar from "./components/TopBar.jsx";
 import { isAuthenticated } from "./api.js";
 import "./admin.css";
 
-const PAGES = { dashboard: Dashboard, photos: Photos, videos: Videos, settings: Settings };
+const PAGES = { dashboard: Dashboard, photos: Photos, videos: Videos, texts: Texts, settings: Settings };
 
 export default function AdminApp() {
   const [authed, setAuthed] = useState(isAuthenticated);

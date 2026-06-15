@@ -1,10 +1,11 @@
 import { clearToken } from "../api.js";
 
 const NAV = [
-  { id: "dashboard", label: "Dashboard",  icon: "⊞" },
-  { id: "photos",    label: "Photos",     icon: "⊟" },
-  { id: "videos",    label: "Videos",     icon: "▷" },
-  { id: "settings",  label: "Settings",   icon: "⊕" },
+  { id: "dashboard", label: "Dashboard", icon: "D" },
+  { id: "photos", label: "Photos", icon: "P" },
+  { id: "videos", label: "Videos", icon: "V" },
+  { id: "texts", label: "Text", icon: "T" },
+  { id: "settings", label: "Settings", icon: "S" },
 ];
 
 export default function Sidebar({ activePage, onNavigate }) {
@@ -27,7 +28,7 @@ export default function Sidebar({ activePage, onNavigate }) {
         className="adm-sidebar-link adm-sidebar-logout"
         onClick={() => { clearToken(); window.location.reload(); }}
       >
-        <span className="adm-sidebar-icon">↩</span>
+        <span className="adm-sidebar-icon">Out</span>
         Sign out
       </button>
     </aside>

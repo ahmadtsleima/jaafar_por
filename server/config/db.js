@@ -2,6 +2,7 @@ import Database from "better-sqlite3";
 import path from "path";
 import { fileURLToPath } from "url";
 import { ensureUploadsDir } from "./uploads.js";
+import { SITE_TEXT_FIELDS } from "../../shared/siteText.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -46,10 +47,21 @@ db.exec(`
     is_staged         INTEGER DEFAULT 1,
     uploaded_at       TEXT DEFAULT (datetime('now'))
   );
+
+  CREATE TABLE IF NOT EXISTS site_texts (
+    key        TEXT PRIMARY KEY,
+    value      TEXT NOT NULL,
+    updated_at TEXT DEFAULT (datetime('now'))
+  );
 `);
 
 // Keep this legacy column so old rows can map to local /uploads paths.
 ensureLegacyStorageColumns();
+
+const seedSiteText = db.prepare("INSERT OR IGNORE INTO site_texts (key, value) VALUES (?, ?)");
+for (const field of SITE_TEXT_FIELDS) {
+  seedSiteText.run(field.key, field.value);
+}
 
 const photosSchema = db
   .prepare("SELECT sql FROM sqlite_master WHERE type = 'table' AND name = 'photos'")

@@ -4,6 +4,7 @@ import dotenv from "dotenv";
 import { fileURLToPath } from "url";
 import path from "path";
 import authRouter from "./routes/auth.js";
+import contentRouter from "./routes/content.js";
 import photosRouter from "./routes/photos.js";
 import videosRouter from "./routes/videos.js";
 import { UPLOADS_DIR } from "./config/uploads.js";
@@ -30,6 +31,7 @@ app.use("/uploads", express.static(UPLOADS_DIR, {
 app.get("/api/health", (_req, res) => res.json({ status: "ok", ts: Date.now() }));
 
 app.use("/api", authRouter);
+app.use("/api", contentRouter);
 app.use("/api", photosRouter);
 app.use("/api", videosRouter);
 

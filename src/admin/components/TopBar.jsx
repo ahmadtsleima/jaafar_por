@@ -2,6 +2,7 @@ const PAGE_TITLES = {
   dashboard: "Dashboard",
   photos: "Photos",
   videos: "Videos",
+  texts: "Text Editor",
   settings: "Settings",
 };
 

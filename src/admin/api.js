@@ -85,6 +85,12 @@ export const api = {
 
   stats: () => apiFetch("/admin/stats"),
 
+  content: {
+    list: () => apiFetch("/admin/content"),
+    update: (values) =>
+      apiFetch("/admin/content", { method: "PATCH", body: JSON.stringify({ values }) }),
+  },
+
   photos: {
     list: (category) =>
       apiFetch(`/admin/photos${category ? `?category=${category}` : ""}`),

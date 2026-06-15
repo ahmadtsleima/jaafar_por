@@ -1,6 +1,7 @@
-﻿import { useEffect, useMemo, useRef, useState } from "react";
+﻿import { createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
 
 import { createPortal } from "react-dom";
+import { SITE_TEXT_DEFAULTS } from "../shared/siteText.js";
 
 const videoFilters = ["Brands", "Filmmaking", "Commercial", "Fashion"];
 
@@ -9,8 +10,8 @@ const isVimeoUrl = (src) => typeof src === "string" && src.includes("player.vime
 
 /**
  * Build a Vimeo embed URL with the right params.
- * background=1  → auto-plays muted, no controls (for carousel preview)
- * autoplay=1    → full player with controls (for popup)
+ * background=1  ? auto-plays muted, no controls (for carousel preview)
+ * autoplay=1    ? full player with controls (for popup)
  */
 function vimeoSrc(baseUrl, { background = false } = {}) {
   const url = new URL(baseUrl);
@@ -48,6 +49,26 @@ const motionVideoSlots = {
 };
 
 const fallbackCompareItems = [];
+
+const SiteTextContext = createContext((key, fallback) => fallback ?? SITE_TEXT_DEFAULTS[key] ?? "");
+
+function useSiteTextValues() {
+  const [values, setValues] = useState(SITE_TEXT_DEFAULTS);
+
+  useEffect(() => {
+    fetch("/api/content", { cache: "no-store" })
+      .then((response) => (response.ok ? response.json() : SITE_TEXT_DEFAULTS))
+      .then((nextValues) => setValues({ ...SITE_TEXT_DEFAULTS, ...(nextValues || {}) }))
+      .catch(() => setValues(SITE_TEXT_DEFAULTS));
+  }, []);
+
+  return useMemo(
+    () => (key, fallback) => values[key] ?? fallback ?? SITE_TEXT_DEFAULTS[key] ?? "",
+    [values],
+  );
+}
+
+const useText = () => useContext(SiteTextContext);
 
 
 
@@ -215,8 +236,10 @@ function App() {
   const handleImageError = (event) => {
     event.currentTarget.closest(".collection-feature, .photo-card, .selected-carousel-card, .about-image, .spatial-fallback-card, .compare-widget")?.classList.add("image-fallback");
   };
+  const t = useSiteTextValues();
 
   return (
+    <SiteTextContext.Provider value={t}>
     <>
       <div className="scroll-progress" aria-hidden="true">
         <span ref={progressBarRef} />
@@ -241,18 +264,20 @@ function App() {
       </main>
 
     </>
+    </SiteTextContext.Provider>
   );
 }
 
 function Header({ headerRef, isMenuOpen, setIsMenuOpen, activeSection }) {
   const closeMenu = () => setIsMenuOpen(false);
+  const t = useText();
 
   return (
     <header className={`site-header${isMenuOpen ? " menu-open" : ""}`} ref={headerRef} aria-label="Primary navigation">
       <div className="nav-shell">
         <div className="nav-left">
-          <a className="brand" href="#top" aria-label="Jaafar Sleiman home" onClick={closeMenu}>
-            <strong>Jaafar Sleiman</strong>
+          <a className="brand" href="#top" aria-label={`${t("site.brand")} home`} onClick={closeMenu}>
+            <strong>{t("site.brand")}</strong>
           </a>
 
           <button
@@ -260,7 +285,7 @@ function Header({ headerRef, isMenuOpen, setIsMenuOpen, activeSection }) {
             type="button"
             aria-controls="mobile-menu"
             aria-expanded={isMenuOpen}
-            aria-label={isMenuOpen ? "Close menu" : "Open menu"}
+            aria-label={isMenuOpen ? t("nav.closeMenu") : t("nav.openMenu")}
             onClick={() => setIsMenuOpen((open) => !open)}
           >
             <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
@@ -272,31 +297,31 @@ function Header({ headerRef, isMenuOpen, setIsMenuOpen, activeSection }) {
         </div>
 
         <nav className="desktop-nav" aria-label="Desktop navigation">
-          <a className="nav-link" href="#top" aria-current={activeSection === "top" ? "page" : undefined}>Home</a>
-          <a className="nav-link" href="#motion-design" aria-current={activeSection === "motion-design" ? "page" : undefined}>Motion</a>
-          <a className="nav-link" href="#filmmaking" aria-current={activeSection === "filmmaking" ? "page" : undefined}>Films</a>
-          <a className="nav-link" href="#color-grading" aria-current={activeSection === "color-grading" ? "page" : undefined}>Color</a>
-          <a className="nav-link" href="#photography" aria-current={activeSection === "photography" ? "page" : undefined}>Photo</a>
-          <a className="nav-link" href="#bts" aria-current={activeSection === "bts" ? "page" : undefined}>BTS</a>
-          <a className="nav-link" href="#about" aria-current={activeSection === "about" ? "page" : undefined}>About</a>
+          <a className="nav-link" href="#top" aria-current={activeSection === "top" ? "page" : undefined}>{t("nav.home")}</a>
+          <a className="nav-link" href="#motion-design" aria-current={activeSection === "motion-design" ? "page" : undefined}>{t("nav.motion")}</a>
+          <a className="nav-link" href="#filmmaking" aria-current={activeSection === "filmmaking" ? "page" : undefined}>{t("nav.films")}</a>
+          <a className="nav-link" href="#color-grading" aria-current={activeSection === "color-grading" ? "page" : undefined}>{t("nav.color")}</a>
+          <a className="nav-link" href="#photography" aria-current={activeSection === "photography" ? "page" : undefined}>{t("nav.photo")}</a>
+          <a className="nav-link" href="#bts" aria-current={activeSection === "bts" ? "page" : undefined}>{t("nav.bts")}</a>
+          <a className="nav-link" href="#about" aria-current={activeSection === "about" ? "page" : undefined}>{t("nav.about")}</a>
         </nav>
 
         <div className="nav-actions">
-          <a className="nav-ghost" href="https://www.instagram.com/" target="_blank" rel="noreferrer">Instagram</a>
-          <a className="nav-cta" href="mailto:hello@jaafarsleiman.com">Book a Shoot</a>
+          <a className="nav-ghost" href="https://www.instagram.com/" target="_blank" rel="noreferrer">{t("nav.instagram")}</a>
+          <a className="nav-cta" href="mailto:hello@jaafarsleiman.com">{t("nav.book")}</a>
         </div>
       </div>
 
       <nav className="mobile-menu" id="mobile-menu" aria-label="Mobile navigation" hidden={!isMenuOpen}>
         <div className="mobile-menu-inner">
-          <span className="mobile-menu-kicker">Menu</span>
-          <a href="#top" onClick={closeMenu}>Home</a>
-          <a href="#motion-design" onClick={closeMenu}>Motion</a>
-          <a href="#filmmaking" onClick={closeMenu}>Films</a>
-          <a href="#color-grading" onClick={closeMenu}>Color</a>
-          <a href="#photography" onClick={closeMenu}>Photo</a>
-          <a href="#bts" onClick={closeMenu}>BTS</a>
-          <a href="#about" onClick={closeMenu}>About</a>
+          <span className="mobile-menu-kicker">{t("nav.menu")}</span>
+          <a href="#top" onClick={closeMenu}>{t("nav.home")}</a>
+          <a href="#motion-design" onClick={closeMenu}>{t("nav.motion")}</a>
+          <a href="#filmmaking" onClick={closeMenu}>{t("nav.films")}</a>
+          <a href="#color-grading" onClick={closeMenu}>{t("nav.color")}</a>
+          <a href="#photography" onClick={closeMenu}>{t("nav.photo")}</a>
+          <a href="#bts" onClick={closeMenu}>{t("nav.bts")}</a>
+          <a href="#about" onClick={closeMenu}>{t("nav.about")}</a>
         </div>
       </nav>
     </header>
@@ -305,6 +330,7 @@ function Header({ headerRef, isMenuOpen, setIsMenuOpen, activeSection }) {
 
 function Hero({ onImageError }) {
   const heroRef = useRef(null);
+  const t = useText();
   const [heroSrc, setHeroSrc] = useState(() => cachedHeroSrc || sessionStorage.getItem("hero_background_src") || "");
   const [heroLoaded, setHeroLoaded] = useState(Boolean(cachedHeroSrc || sessionStorage.getItem("hero_background_src")));
 
@@ -418,25 +444,25 @@ function Hero({ onImageError }) {
       <div className="hero-content">
         <div className="hero-index" aria-hidden="true">
           <span>01</span>
-          <span>Portfolio concept</span>
+          <span>{t("hero.index")}</span>
         </div>
-        <p className="eyebrow">Editorial / Commercial / Cultural</p>
+        <p className="eyebrow">{t("hero.eyebrow")}</p>
         <h1 id="hero-title">
-          <span className="hero-name-line hero-name-line-1">Jaafar</span>
-          <span className="hero-name-line hero-name-line-2">Sleiman</span>
+          <span className="hero-name-line hero-name-line-1">{t("hero.firstName")}</span>
+          <span className="hero-name-line hero-name-line-2">{t("hero.lastName")}</span>
         </h1>
         <p className="hero-copy">
-          A black and white visual studio for quiet emotion, sharp light, and stories that feel composed without feeling staged.
+          {t("hero.copy")}
         </p>
         <div className="hero-actions" aria-label="Hero actions">
-          <a className="button button-primary" href="#work">View Work</a>
-          <a className="button button-secondary" href="#contact">Start a Shoot</a>
+          <a className="button button-primary" href="#motion-design">{t("hero.primaryCta")}</a>
+          <a className="button button-secondary" href="mailto:hello@jaafarsleiman.com">{t("hero.secondaryCta")}</a>
         </div>
       </div>
       <aside className="hero-meta" aria-label="Studio highlights">
-        <span>Brands &amp; Campaigns</span>
-        <span>Fashion Editorial</span>
-        <span>Events &amp; Culture</span>
+        <span>{t("hero.meta1")}</span>
+        <span>{t("hero.meta2")}</span>
+        <span>{t("hero.meta3")}</span>
       </aside>
       <div className="scroll-indicator" aria-hidden="true" />
     </section>
@@ -512,6 +538,7 @@ function SectionHeading({ kicker, title, children }) {
 }
 
 function CinematicVideo({ video, vertical = false, featured = false, label, autoPlay = false, onOpen }) {
+  const t = useText();
   const videoRef = useRef(null);
   const src = video?.url || video?.src || "";
 
@@ -571,7 +598,7 @@ function CinematicVideo({ video, vertical = false, featured = false, label, auto
             />
           )
         ) : (
-          <div className="cinema-empty-media">Add video in admin</div>
+          <div className="cinema-empty-media">{t("video.empty")}</div>
         )}
         <span className="cinema-play-pulse" aria-hidden="true" />
       </div>
@@ -584,14 +611,15 @@ function CinematicVideo({ video, vertical = false, featured = false, label, auto
 }
 
 function MotionDesignSection() {
+  const t = useText();
   const videos = useVideosFromSlots(motionDesignSlots);
   const [activeVideo, setActiveVideo] = useState(null);
   const closeVideo = () => setActiveVideo(null);
 
   return (
     <section className="cinema-section cinema-motion" id="motion-design">
-      <SectionHeading kicker="Vertical reels / 1080x1920" title="Motion Design">
-        Designed for thumb-stopping vertical rhythm, kinetic cuts, and high-retention brand motion.
+      <SectionHeading kicker={t("motion.kicker")} title={t("motion.title")}>
+        {t("motion.body")}
       </SectionHeading>
       <div className="motion-reel-grid">
         {(videos.length ? videos : Array.from({ length: 4 })).slice(0, 8).map((video, index) => (
@@ -607,9 +635,9 @@ function MotionDesignSection() {
       </div>
       {activeVideo && createPortal(
         <div className="video-lightbox" role="dialog" aria-modal="true" aria-label="Motion Design video viewer">
-          <button type="button" className="video-lightbox-backdrop" onClick={closeVideo} aria-label="Close video" />
+          <button type="button" className="video-lightbox-backdrop" onClick={closeVideo} aria-label={t("video.closeLabel")} />
           <figure>
-            <button type="button" onClick={closeVideo} aria-label="Close video">Close</button>
+            <button type="button" onClick={closeVideo} aria-label={t("video.closeLabel")}>{t("video.close")}</button>
             {isVimeoUrl(activeVideo.url || activeVideo.src) ? (
               <iframe
                 src={vimeoSrc(activeVideo.url || activeVideo.src)}
@@ -630,12 +658,13 @@ function MotionDesignSection() {
 }
 
 function FilmmakingSection() {
+  const t = useText();
   const videos = useVideosFromSlots(filmmakingSlots);
 
   return (
     <section className="cinema-section cinema-filmmaking" id="filmmaking">
-      <SectionHeading kicker="Narrative / campaign / editorial" title="Filmmaking">
-        Full-width cinematic work built around pacing, atmosphere, and visual storytelling.
+      <SectionHeading kicker={t("filmmaking.kicker")} title={t("filmmaking.title")}>
+        {t("filmmaking.body")}
       </SectionHeading>
       <div className="film-strip">
         {(videos.length ? videos : Array.from({ length: 3 })).slice(0, 5).map((video, index) => (
@@ -652,6 +681,7 @@ function FilmmakingSection() {
 }
 
 function ColorGradingPortfolio({ onImageError }) {
+  const t = useText();
   const [items, setItems] = useState([]);
   const videos = useVideosFromSlots(["color_grading_video", "services_reel", "reel_showcase"]);
 
@@ -684,26 +714,26 @@ function ColorGradingPortfolio({ onImageError }) {
 
   return (
     <section className="cinema-section cinema-color" id="color-grading">
-      <SectionHeading kicker="Before / after / final grade" title="Color Grading">
-        Drag through the frame and feel the tone shift from neutral capture to finished cinematic image.
+      <SectionHeading kicker={t("color.kicker")} title={t("color.title")}>
+        {t("color.body")}
       </SectionHeading>
       <div className="grading-sequence">
         <div className="grading-compare-row">
           {items[0] ? (
             <CompareWidget item={items[0]} onImageError={onImageError} />
           ) : (
-            <div className="cinema-empty-panel">Add compare_before and compare_after images in admin.</div>
+            <div className="cinema-empty-panel">{t("color.emptyFirstPair")}</div>
           )}
           {items[1] ? (
             <CompareWidget item={items[1]} onImageError={onImageError} />
           ) : items[0] ? (
             <CompareWidget item={items[0]} onImageError={onImageError} />
           ) : (
-            <div className="cinema-empty-panel">Add a second before/after pair to complete the sequence.</div>
+            <div className="cinema-empty-panel">{t("color.emptySecondPair")}</div>
           )}
         </div>
         <div className="grading-video-row">
-          <CinematicVideo video={videos[0]} vertical featured label="Cinematic grade film" />
+          <CinematicVideo video={videos[0]} vertical featured label={t("color.videoLabel")} />
         </div>
       </div>
     </section>
@@ -724,6 +754,7 @@ function categorizePhoto(photo, index) {
 }
 
 function PhotographyPortfolio({ onImageError }) {
+  const t = useText();
   const photos = usePhotos();
   const [activeCategory, setActiveCategory] = useState(photoCategoryLabels[0]);
   const [lightboxPhoto, setLightboxPhoto] = useState(null);
@@ -758,8 +789,8 @@ function PhotographyPortfolio({ onImageError }) {
 
   return (
     <section className="cinema-section cinema-photo" id="photography">
-      <SectionHeading kicker="Still image archive" title="Photography">
-        Premium image studies across food, commercial, jewelry, and product work.
+      <SectionHeading kicker={t("photography.kicker")} title={t("photography.title")}>
+        {t("photography.body")}
       </SectionHeading>
       <div className="photo-carousel-head">
         <div className="photo-category-tabs" aria-label="Photography categories">
@@ -770,13 +801,18 @@ function PhotographyPortfolio({ onImageError }) {
               className={activeCategory === label ? "is-active" : ""}
               onClick={() => setActiveCategory(label)}
             >
-              {label}
+              {t(`photography.category.${
+                label === "Food & Beverage" ? "fnb"
+                : label === "Commercial Photography" ? "commercial"
+                : label === "Jewelry Photography" ? "jewelry"
+                : "product"
+              }`, label)}
             </button>
           ))}
         </div>
         <div className="photo-carousel-controls" aria-label="Photography carousel controls">
-          <button type="button" onClick={() => scrollPhotoTrack(-1)} aria-label="Previous photos">&lt;</button>
-          <button type="button" onClick={() => scrollPhotoTrack(1)} aria-label="Next photos">&gt;</button>
+          <button type="button" onClick={() => scrollPhotoTrack(-1)} aria-label={t("photography.previous")}>&lt;</button>
+          <button type="button" onClick={() => scrollPhotoTrack(1)} aria-label={t("photography.next")}>&gt;</button>
         </div>
       </div>
       <div className="photo-carousel-shell">
@@ -794,7 +830,7 @@ function PhotographyPortfolio({ onImageError }) {
                 <span>{photo.title || photo.alt_text || activeCategory}</span>
               </>
             ) : (
-              <span>Add gallery photo</span>
+              <span>{t("photography.empty")}</span>
             )}
           </button>
           ))}
@@ -802,9 +838,9 @@ function PhotographyPortfolio({ onImageError }) {
       </div>
       {lightboxPhoto && createPortal(
         <div className="photo-lightbox" role="dialog" aria-modal="true" aria-label="Photography preview">
-          <button type="button" className="photo-lightbox-backdrop" onClick={() => setLightboxPhoto(null)} aria-label="Close preview" />
+          <button type="button" className="photo-lightbox-backdrop" onClick={() => setLightboxPhoto(null)} aria-label={t("photography.closePreview")} />
           <figure>
-            <button type="button" onClick={() => setLightboxPhoto(null)} aria-label="Close preview">Close</button>
+            <button type="button" onClick={() => setLightboxPhoto(null)} aria-label={t("photography.closePreview")}>{t("photography.close")}</button>
             <img src={lightboxPhoto.url} alt={lightboxPhoto.alt_text || ""} />
             <figcaption>{lightboxPhoto.title || lightboxPhoto.alt_text || activeCategory}</figcaption>
           </figure>
@@ -816,6 +852,7 @@ function PhotographyPortfolio({ onImageError }) {
 }
 
 function BTSSection({ onImageError }) {
+  const t = useText();
   const videos = useVideosFromSlots(["lighting_featured", "services_reel", "reel_showcase"]);
   const photos = usePhotos();
   const lightingPhotos = photos.filter((photo) =>
@@ -824,19 +861,19 @@ function BTSSection({ onImageError }) {
 
   return (
     <section className="cinema-section cinema-lighting" id="bts">
-      <SectionHeading kicker="Behind the scenes" title="BTS">
-        A closer look at the setups, camera-side moments, and production details behind the final frame.
+      <SectionHeading kicker={t("bts.kicker")} title={t("bts.title")}>
+        {t("bts.body")}
       </SectionHeading>
-      <CinematicVideo video={videos[0]} vertical featured label="Lighting Techniques" />
+      <CinematicVideo video={videos[0]} vertical featured label={t("bts.videoLabel")} />
       <div className="lighting-gallery">
         {(lightingPhotos.length ? lightingPhotos : Array.from({ length: 3 })).slice(0, 3).map((photo, index) => (
           <figure key={photo?.id || `lighting-placeholder-${index}`} className="lighting-card">
             {photo?.url ? (
               <img src={photo.url} alt={photo.alt_text || ""} loading="lazy" onError={onImageError} />
             ) : (
-              <span>Add BTS photo</span>
+              <span>{t("bts.emptyPhoto")}</span>
             )}
-            <figcaption>{photo?.title || `BTS setup ${String(index + 1).padStart(2, "0")}`}</figcaption>
+            <figcaption>{photo?.title || `${t("bts.photoLabel")} ${String(index + 1).padStart(2, "0")}`}</figcaption>
           </figure>
         ))}
       </div>
@@ -1040,10 +1077,10 @@ function ReelShowcase() {
 
   return (
     <section className="reel-section" id="reels" aria-labelledby="reels-title">
-      {/* ── Bordered card wrapper — same pattern as Selected Frames & Video Projects ── */}
+      {/* -- Bordered card wrapper — same pattern as Selected Frames & Video Projects -- */}
       <div className="reel-card-wrap reel-fade-in">
 
-        {/* ── Centered section header ── */}
+        {/* -- Centered section header -- */}
         <header className="reel-sec-header">
           <p className="eyebrow">Featured Work</p>
           <h2 id="reels-title">Selected Reels</h2>
@@ -1053,7 +1090,7 @@ function ReelShowcase() {
           </p>
         </header>
 
-        {/* ── Controls row: counter + arrows ── */}
+        {/* -- Controls row: counter + arrows -- */}
         <div className="reel-controls">
           <span className="reel-counter" aria-label={`${activeIdx + 1} of ${total}`}>
             <strong>{String(activeIdx + 1).padStart(2, "0")}</strong>
@@ -1075,7 +1112,7 @@ function ReelShowcase() {
           </div>
         </div>
 
-        {/* ── Featured video ── */}
+        {/* -- Featured video -- */}
         <div className="reel-stage-wrap">
           <div className={`reel-stage${transitioning ? " is-transitioning" : ""}`}>
             {/* video / iframe */}
@@ -1142,7 +1179,7 @@ function ReelShowcase() {
           )}
         </div>
 
-        {/* ── Thumbnail strip ── */}
+        {/* -- Thumbnail strip -- */}
         {total > 1 && (
           <div className="reel-strip-wrap">
             <div className="reel-strip" ref={thumbsRef}>
@@ -1189,7 +1226,7 @@ function ReelShowcase() {
 
       </div>{/* end .reel-card-wrap */}
 
-      {/* ── Fullscreen popup ── */}
+      {/* -- Fullscreen popup -- */}
       {popup && createPortal(
         <div className="video-popup" role="dialog" aria-modal="true" aria-label="Reel player">
           <button className="video-popup-backdrop" type="button" onClick={() => setPopup(false)} aria-label="Close" />
@@ -1917,6 +1954,7 @@ function CreativeDirection() {
 }
 
 function About({ onImageError }) {
+  const t = useText();
   const [aboutSrc, setAboutSrc] = useState("");
   const [aboutAlt, setAboutAlt] = useState("Photographer preparing a camera in studio light");
 
@@ -1947,27 +1985,28 @@ function About({ onImageError }) {
         </div>
       )}
       <div className="about-copy">
-        <h2 id="about-title">Light, emotion, and honest moments.</h2>
+        <h2 id="about-title">{t("about.title")}</h2>
       </div>
     </section>
   );
 }
 
 function MiniFooter() {
+  const t = useText();
   return (
     <footer className="mini-footer" aria-label="Site footer">
-      <p>&copy; 2026 Jaafar Sleiman</p>
+      <p>{t("footer.copyright")}</p>
       <nav aria-label="Footer links">
-        <a href="https://www.instagram.com/" target="_blank" rel="noreferrer">Instagram</a>
+        <a href="https://www.instagram.com/" target="_blank" rel="noreferrer">{t("footer.instagram")}</a>
         <a
           href="https://wa.me/96181064940?text=Hello%20Jaafar%2C%20I%27d%20like%20to%20book%20a%20shoot."
           target="_blank"
           rel="noreferrer"
         >
-          WhatsApp
+          {t("footer.whatsapp")}
         </a>
       </nav>
-      <span>Beirut &middot; Worldwide</span>
+      <span>{t("footer.location")}</span>
     </footer>
   );
 }
@@ -2150,3 +2189,5 @@ function ClapperIcon() {
 }
 
 export default App;
+
+
