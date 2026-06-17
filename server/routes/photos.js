@@ -31,7 +31,7 @@ router.get("/photos", async (req, res) => {
   if (category) { sql += " AND category = ?"; params.push(category); }
   if (slot)     { sql += " AND slot = ?";     params.push(slot); }
   sql += " ORDER BY sort_order ASC, uploaded_at DESC";
-  res.set("Cache-Control", "no-store");
+  res.set("Cache-Control", "public, max-age=30, stale-while-revalidate=300");
   return res.json(enrichAll(db.prepare(sql).all(...params)));
 });
 

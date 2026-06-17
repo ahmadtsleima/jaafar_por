@@ -56,7 +56,7 @@ function useSiteTextValues() {
   const [values, setValues] = useState(SITE_TEXT_DEFAULTS);
 
   useEffect(() => {
-    fetch("/api/content", { cache: "no-store" })
+    fetch("/api/content")
       .then((response) => (response.ok ? response.json() : SITE_TEXT_DEFAULTS))
       .then((nextValues) => setValues({ ...SITE_TEXT_DEFAULTS, ...(nextValues || {}) }))
       .catch(() => setValues(SITE_TEXT_DEFAULTS));
@@ -69,6 +69,34 @@ function useSiteTextValues() {
 }
 
 const useText = () => useContext(SiteTextContext);
+
+function useNearViewport(rootMargin = "900px 0px") {
+  const ref = useRef(null);
+  const [isNear, setIsNear] = useState(false);
+
+  useEffect(() => {
+    const node = ref.current;
+    if (!node || isNear) return undefined;
+    if (!("IntersectionObserver" in window)) {
+      setIsNear(true);
+      return undefined;
+    }
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (!entry?.isIntersecting) return;
+        setIsNear(true);
+        observer.disconnect();
+      },
+      { rootMargin, threshold: 0.01 },
+    );
+
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [isNear, rootMargin]);
+
+  return [ref, isNear];
+}
 
 
 
@@ -365,7 +393,7 @@ function Hero({ onImageError }) {
 
     if (heroSrc) useHeroSource(heroSrc);
 
-    fetch("/api/photos?slot=hero_background", { cache: "no-store" })
+    fetch("/api/photos?slot=hero_background")
       .then((r) => r.json())
       .then((data) => {
         if (Array.isArray(data) && data[0]?.url) {
@@ -479,7 +507,7 @@ const photoCategoryLabels = [
 ];
 
 const fetchJson = (url) =>
-  fetch(url, { cache: "no-store" })
+  fetch(url)
     .then((response) => (response.ok ? response.json() : null))
     .catch(() => null);
 
@@ -540,8 +568,10 @@ function SectionHeading({ kicker, title, children }) {
 function CinematicVideo({ video, vertical = false, featured = false, label, autoPlay = false, onOpen }) {
   const t = useText();
   const videoRef = useRef(null);
+  const [viewportRef, isNearViewport] = useNearViewport();
   const [popupVideo, setPopupVideo] = useState(null);
   const src = video?.url || video?.src || "";
+  const previewSrc = isNearViewport ? src : "";
   const canOpen = Boolean(src);
   const openVideo = () => {
     if (!canOpen) return;
@@ -562,9 +592,9 @@ function CinematicVideo({ video, vertical = false, featured = false, label, auto
   };
 
   useEffect(() => {
-    if (!autoPlay || !src || isVimeoUrl(src)) return;
+    if (!autoPlay || !previewSrc || isVimeoUrl(previewSrc)) return;
     play();
-  }, [autoPlay, src]);
+  }, [autoPlay, previewSrc]);
 
   const handleKeyDown = (event) => {
     if (!canOpen) return;
@@ -577,6 +607,7 @@ function CinematicVideo({ video, vertical = false, featured = false, label, auto
   return (
     <>
       <article
+        ref={viewportRef}
         className={`cinema-video-card${vertical ? " is-vertical" : ""}${featured ? " is-featured" : ""}${canOpen ? " is-openable" : ""}`}
         role={canOpen ? "button" : undefined}
         tabIndex={canOpen ? 0 : undefined}
@@ -587,7 +618,7 @@ function CinematicVideo({ video, vertical = false, featured = false, label, auto
           {src ? (
             isVimeoUrl(src) ? (
               <iframe
-                src={vimeoSrc(src, { background: true })}
+                src={previewSrc ? vimeoSrc(previewSrc, { background: true }) : "about:blank"}
                 title={video?.title || label || "Portfolio video"}
                 loading="lazy"
                 allow="autoplay; fullscreen; picture-in-picture"
@@ -596,12 +627,12 @@ function CinematicVideo({ video, vertical = false, featured = false, label, auto
             ) : (
               <video
                 ref={videoRef}
-                src={src}
+                src={previewSrc || undefined}
                 muted
                 loop
                 playsInline
                 autoPlay={autoPlay}
-                preload={featured || autoPlay ? "auto" : "metadata"}
+                preload={previewSrc ? "metadata" : "none"}
                 onCanPlay={autoPlay ? play : undefined}
                 onPointerEnter={play}
                 onPointerLeave={pause}
@@ -877,7 +908,7 @@ function PhotographyPortfolio({ onImageError }) {
           >
             {photo?.url ? (
               <>
-                <img src={photo.url} alt={photo.alt_text || ""} loading="lazy" onError={onImageError} />
+                <img src={photo.url} alt={photo.alt_text || ""} loading="lazy" decoding="async" onError={onImageError} />
                 <span>{photo.title || photo.alt_text || activeCategory}</span>
               </>
             ) : (
@@ -892,7 +923,7 @@ function PhotographyPortfolio({ onImageError }) {
           <button type="button" className="photo-lightbox-backdrop" onClick={() => setLightboxPhoto(null)} aria-label={t("photography.closePreview")} />
           <figure>
             <button type="button" onClick={() => setLightboxPhoto(null)} aria-label={t("photography.closePreview")}>{t("photography.close")}</button>
-            <img src={lightboxPhoto.url} alt={lightboxPhoto.alt_text || ""} />
+            <img src={lightboxPhoto.url} alt={lightboxPhoto.alt_text || ""} decoding="async" />
             <figcaption>{lightboxPhoto.title || lightboxPhoto.alt_text || activeCategory}</figcaption>
           </figure>
         </div>,
@@ -914,7 +945,7 @@ function BTSSection({ onImageError }) {
   const renderBtsPhoto = (photo, index) => (
     <figure key={photo?.id || `lighting-placeholder-${index}`} className="lighting-card">
       {photo?.url ? (
-        <img src={photo.url} alt={photo.alt_text || ""} loading="lazy" onError={onImageError} />
+        <img src={photo.url} alt={photo.alt_text || ""} loading="lazy" decoding="async" onError={onImageError} />
       ) : (
         <span>{t("bts.emptyPhoto")}</span>
       )}
@@ -1061,9 +1092,9 @@ function CompareWidget({ item, onImageError }) {
       aria-valuenow={Math.round(position)}
       tabIndex={0}
     >
-      <img className="compare-before" src={item.before} alt={`${item.title} before edit`} onError={onImageError} draggable="false" loading="lazy" />
+      <img className="compare-before" src={item.before} alt={`${item.title} before edit`} onError={onImageError} draggable="false" loading="lazy" decoding="async" />
       <div className="compare-after" aria-hidden="true">
-        <img src={item.after} alt="" onError={onImageError} draggable="false" loading="lazy" />
+        <img src={item.after} alt="" onError={onImageError} draggable="false" loading="lazy" decoding="async" />
       </div>
       <div className="compare-divider" aria-hidden="true">
         <span></span>
@@ -1489,7 +1520,7 @@ function VideoProjects() {
 
     Promise.all(
       videoFilters.map((category) =>
-        fetch(`/api/videos?slot=${motionVideoSlots[category]}&all=1`, { cache: "no-store" })
+        fetch(`/api/videos?slot=${motionVideoSlots[category]}&all=1`)
           .then((response) => response.json())
           .catch(() => []),
       ),
@@ -2035,6 +2066,7 @@ function About({ onImageError }) {
               alt={aboutAlt}
               onError={onImageError}
               loading="lazy"
+              decoding="async"
             />
           </div>
         </div>

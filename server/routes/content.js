@@ -11,7 +11,7 @@ function readTextMap() {
 }
 
 router.get("/content", (_req, res) => {
-  res.set("Cache-Control", "no-store");
+  res.set("Cache-Control", "public, max-age=30, stale-while-revalidate=300");
   return res.json(readTextMap());
 });
 

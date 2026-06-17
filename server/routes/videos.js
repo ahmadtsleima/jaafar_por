@@ -24,7 +24,7 @@ const enrichAll = (rows) => rows.map(enrichUrl);
 router.get("/videos", async (req, res) => {
   const slot = req.query.slot || "scroll_scrub";
   const visibilityClause = String(slot).startsWith("motion_") ? "" : " AND published = 1";
-  res.set("Cache-Control", "no-store");
+  res.set("Cache-Control", "public, max-age=30, stale-while-revalidate=300");
 
   if (req.query.all === "1") {
     const rows = db.prepare(

@@ -25,7 +25,11 @@ app.use(
 app.use(express.json());
 app.use("/uploads", express.static(UPLOADS_DIR, {
   immutable: true,
-  maxAge: "30d",
+  maxAge: "1y",
+  setHeaders(res) {
+    res.setHeader("Accept-Ranges", "bytes");
+    res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
+  },
 }));
 
 app.get("/api/health", (_req, res) => res.json({ status: "ok", ts: Date.now() }));
@@ -37,9 +41,23 @@ app.use("/api", videosRouter);
 
 // Serve the Vite production build
 const distDir = path.join(__dirname, "..", "dist");
-app.use(express.static(distDir));
+app.use(express.static(distDir, {
+  etag: true,
+  setHeaders(res, filePath) {
+    if (filePath.includes(`${path.sep}assets${path.sep}`)) {
+      res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
+      return;
+    }
+    if (filePath.endsWith(".html")) {
+      res.setHeader("Cache-Control", "no-cache");
+      return;
+    }
+    res.setHeader("Cache-Control", "public, max-age=3600");
+  },
+}));
 // SPA fallback — always return index.html for non-API routes
 app.get("*", (_req, res) => {
+  res.set("Cache-Control", "no-cache");
   res.sendFile(path.join(distDir, "index.html"));
 });
 
