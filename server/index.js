@@ -26,7 +26,10 @@ app.use(express.json());
 app.use("/uploads", express.static(UPLOADS_DIR, {
   immutable: true,
   maxAge: "1y",
-  setHeaders(res) {
+  setHeaders(res, filePath) {
+    const ext = path.extname(filePath).toLowerCase();
+    if (ext === ".avif") res.setHeader("Content-Type", "image/avif");
+    if (ext === ".webp") res.setHeader("Content-Type", "image/webp");
     res.setHeader("Accept-Ranges", "bytes");
     res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
   },
